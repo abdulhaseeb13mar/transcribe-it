@@ -14,15 +14,103 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum PlanType {
+  BASIC
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  PAST_DUE
+}
+
 model User {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String   @unique
+  name           String
+  password       String?  // Optional for OAuth users
+  role           UserRole @default(ADMIN)
+  organizationId String?  @map("organization_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@map("users")
+}
+
+model Organization {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email     String   @unique
   name      String
-  password  String?  // Optional for OAuth users
+  credits   Int      @default(0) // AI translation quota credits
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("users")
+  // Relations
+  users       User[]
+  billing     Billing?
+  creditUsage CreditUsage[]
+
+  @@map("organizations")
+}
+
+model Plan {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  type        PlanType
+  credits     Int      // Number of credits included in the plan
+  price       Decimal  @db.Decimal(10, 2) // Price in cents or smallest currency unit
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  billings Billing[]
+
+  @@map("plans")
+}
+
+model Billing {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String             @unique @map("organization_id") @db.Uuid
+  planId             String             @map("plan_id") @db.Uuid
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+  stripeCustomerId   String?            @map("stripe_customer_id")
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  currentPeriodStart DateTime?          @map("current_period_start")
+  currentPeriodEnd   DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan         @relation(fields: [planId], references: [id])
+
+  @@map("billing")
+}
+
+model CreditUsage {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  creditsUsed    Int      @map("credits_used")
+  operation      String   // Description of what operation used the credits (e.g., "transcription", "translation")
+  metadata       Json?    // Additional metadata about the usage
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("credit_usage")
 }
 
 
