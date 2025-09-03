@@ -11,6 +11,7 @@ import {
   AuthenticatedRequest,
 } from "../middleware/supabaseAuth";
 import { UserService } from "../services/userService";
+import { UserRole } from "@prisma/client";
 
 const router: IRouter = Router();
 const userService = new UserService();
@@ -47,7 +48,8 @@ router.post(
         await userService.createUser({
           email: authData.user.email || email,
           name: name,
-          password: null, // Don't store password since Supabase handles auth
+          role: UserRole.ADMIN, // Default role for regular users
+          organizationId: null, // Will be set when user joins/creates organization
         });
       } catch (profileError: any) {
         console.error("Profile creation error:", profileError);

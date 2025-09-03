@@ -1,12 +1,14 @@
 import { Router, IRouter } from "express";
 import userRoutes from "./users";
 import authRoutes from "./auth";
+import adminRoutes from "./admin";
 
 const router: IRouter = Router();
 
 // API Routes
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
+router.use("/admin", adminRoutes);
 
 // API Info endpoint
 router.get("/", (req, res) => {
@@ -17,6 +19,7 @@ router.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       users: "/api/users",
+      admin: "/api/admin",
     },
   });
 });

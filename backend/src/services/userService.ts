@@ -1,5 +1,10 @@
-import { User, CreateUserInput, UpdateUserInput } from "../types";
+import {
+  CreateUserInput,
+  UpdateUserInput,
+  CreateSuperAdminInput,
+} from "../types";
 import { prisma } from "../lib/prisma";
+import { User, UserRole } from "@prisma/client";
 
 export class UserService {
   async createUser(userData: CreateUserInput): Promise<User> {
@@ -8,7 +13,8 @@ export class UserService {
         data: {
           email: userData.email,
           name: userData.name,
-          password: userData.password,
+          role: userData.role,
+          organizationId: userData.organizationId,
         },
       });
 
@@ -88,6 +94,49 @@ export class UserService {
       return users;
     } catch (error: any) {
       throw new Error(`Failed to get users: ${error.message}`);
+    }
+  }
+
+  async createSuperAdmin(userData: CreateSuperAdminInput): Promise<User> {
+    try {
+      // Check if a super admin already exists
+      const existingSuperAdmin = await prisma.user.findFirst({
+        where: { role: UserRole.SUPER_ADMIN },
+      });
+
+      if (existingSuperAdmin) {
+        throw new Error("Super admin already exists");
+      }
+
+      const superAdmin = await prisma.user.create({
+        data: {
+          email: userData.email,
+          name: userData.name,
+          role: UserRole.SUPER_ADMIN,
+          organizationId: null, // Super admin doesn't belong to any organization
+        },
+      });
+
+      return superAdmin;
+    } catch (error: any) {
+      if (error.code === "P2002") {
+        throw new Error("User with this email already exists");
+      }
+      throw new Error(`Failed to create super admin: ${error.message}`);
+    }
+  }
+
+  async checkSuperAdminExists(): Promise<boolean> {
+    try {
+      const superAdmin = await prisma.user.findFirst({
+        where: { role: UserRole.SUPER_ADMIN },
+      });
+
+      return !!superAdmin;
+    } catch (error: any) {
+      throw new Error(
+        `Failed to check super admin existence: ${error.message}`
+      );
     }
   }
 }

@@ -19,10 +19,21 @@ export interface EnvironmentVariables {
 export type User = PrismaUser;
 
 // Create user input type
-export type CreateUserInput = Omit<User, "id" | "createdAt" | "updatedAt">;
+export type CreateUserInput = {
+  email: string;
+  name: string;
+  role: PrismaUser["role"];
+  organizationId?: string | null;
+};
 export type UpdateUserInput = Partial<
   Omit<User, "id" | "createdAt" | "updatedAt">
 >;
+
+// Create super admin input type (no role field needed as it's set automatically)
+export type CreateSuperAdminInput = {
+  email: string;
+  name: string;
+};
 
 // API Response interfaces
 export interface ApiResponse<T = any> {
