@@ -5,6 +5,7 @@ dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
@@ -12,12 +13,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Create Supabase client
+if (!supabaseServiceRoleKey) {
+  throw new Error(
+    "Missing SUPABASE_SERVICE_ROLE_KEY environment variable. This is required for admin operations."
+  );
+}
+
+// Create Supabase client for regular operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+  },
+});
+
+// Create Supabase admin client for admin operations (user creation, etc.)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
   },
 });
 

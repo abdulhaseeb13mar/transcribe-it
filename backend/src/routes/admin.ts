@@ -2,8 +2,12 @@ import { Router, Request, Response, IRouter } from "express";
 import { asyncHandler, sendResponse } from "../utils/helpers";
 import { UserService } from "../services/userService";
 import { ValidationError } from "../utils/errors";
-import { CreateSuperAdminInput } from "../types";
-import { User } from "@prisma/client";
+import { supabaseAdmin } from "../config/supabase"; // Updated to use admin client
+import { validateBody } from "../middleware/validation";
+import {
+  createSuperAdminSchema,
+  CreateSuperAdminInput,
+} from "../schemas/admin.schema";
 
 const router: IRouter = Router();
 const userService = new UserService();
@@ -12,21 +16,10 @@ const userService = new UserService();
 // Creates the initial super admin - can only be called once
 router.post(
   "/super-admin",
+  validateBody(createSuperAdminSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, name } = req.body as CreateSuperAdminInput;
-
-    // Basic validation
-    if (!email || !name) {
-      throw new ValidationError("Email and name are required");
-    }
-
-    if (!email.includes("@")) {
-      throw new ValidationError("Please provide a valid email address");
-    }
-
-    if (name.length < 2) {
-      throw new ValidationError("Name must be at least 2 characters long");
-    }
+    const { email, name, password } = (req as any)
+      .validatedBody as CreateSuperAdminInput;
 
     // Check if super admin already exists
     const superAdminExists = await userService.checkSuperAdminExists();
@@ -36,21 +29,45 @@ router.post(
       );
     }
 
-    // Create the super admin
-    const superAdmin = await userService.createSuperAdmin({
-      email,
-      name,
-    });
+    // Create Supabase auth user first
+    const { data: authUser, error } = await supabaseAdmin.auth.admin.createUser(
+      {
+        email,
+        password,
+        email_confirm: true, // Auto-confirm email
+        user_metadata: {
+          name,
+          role: "SUPER_ADMIN",
+        },
+      }
+    );
 
-    sendResponse(res, 201, true, "Super admin created successfully", {
-      superAdmin: {
-        id: superAdmin.id,
-        email: superAdmin.email,
-        name: superAdmin.name,
-        role: superAdmin.role,
-        createdAt: superAdmin.createdAt,
-      },
-    });
+    if (error) {
+      throw new ValidationError(`Failed to create auth user: ${error.message}`);
+    }
+
+    try {
+      // Create the super admin in your database
+      const superAdmin = await userService.createSuperAdmin({
+        email,
+        name,
+        password,
+      });
+
+      sendResponse(res, 201, true, "Super admin created successfully", {
+        superAdmin: {
+          id: superAdmin.id,
+          email: superAdmin.email,
+          name: superAdmin.name,
+          role: superAdmin.role,
+          createdAt: superAdmin.createdAt,
+        },
+      });
+    } catch (dbError) {
+      // Rollback: delete the Supabase user if database creation fails
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+      throw dbError;
+    }
   })
 );
 

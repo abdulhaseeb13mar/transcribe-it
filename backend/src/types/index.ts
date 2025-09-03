@@ -1,4 +1,5 @@
 import { User as PrismaUser } from "@prisma/client";
+import { z } from "zod";
 
 // Environment variables interface
 export interface EnvironmentVariables {
@@ -29,11 +30,16 @@ export type UpdateUserInput = Partial<
   Omit<User, "id" | "createdAt" | "updatedAt">
 >;
 
-// Create super admin input type (no role field needed as it's set automatically)
-export type CreateSuperAdminInput = {
-  email: string;
-  name: string;
-};
+// Re-export Zod schema types (these are now the primary types)
+export type {
+  RegisterInput,
+  LoginInput,
+  RefreshTokenInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  UpdateProfileInput,
+  CreateSuperAdminInput,
+} from "../schemas";
 
 // API Response interfaces
 export interface ApiResponse<T = any> {

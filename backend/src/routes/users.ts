@@ -6,6 +6,11 @@ import {
 } from "../middleware/supabaseAuth";
 import { UserService } from "../services/userService";
 import { ValidationError } from "../utils/errors";
+import { validateBody } from "../middleware/validation";
+import {
+  updateProfileSchema,
+  UpdateProfileInput,
+} from "../schemas/user.schema";
 
 const router: IRouter = Router();
 const userService = new UserService();
@@ -43,19 +48,13 @@ router.get(
 router.put(
   "/profile",
   authenticateUser,
+  validateBody(updateProfileSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { name, email } = req.body;
+    const { name, email } = (req as any).validatedBody as UpdateProfileInput;
     const userId = req.user?.id;
 
     if (!userId) {
       throw new ValidationError("User not authenticated");
-    }
-
-    // Validate input
-    if (!name && !email) {
-      throw new ValidationError(
-        "At least one field (name or email) is required"
-      );
     }
 
     // Update user profile

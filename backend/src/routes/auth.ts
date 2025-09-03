@@ -12,6 +12,19 @@ import {
 } from "../middleware/supabaseAuth";
 import { UserService } from "../services/userService";
 import { UserRole } from "@prisma/client";
+import { validateBody, ValidatedRequest } from "../middleware/validation";
+import {
+  registerSchema,
+  loginSchema,
+  refreshTokenSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  RegisterInput,
+  LoginInput,
+  RefreshTokenInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from "../schemas/auth.schema";
 
 const router: IRouter = Router();
 const userService = new UserService();
@@ -19,13 +32,10 @@ const userService = new UserService();
 // POST /api/auth/register
 router.post(
   "/register",
+  validateBody(registerSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, password, name } = req.body;
-
-    // Basic validation
-    if (!email || !password || !name) {
-      throw new ValidationError("Email, password, and name are required");
-    }
+    const { email, password, name } = (req as any)
+      .validatedBody as RegisterInput;
 
     // Register user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -77,13 +87,9 @@ router.post(
 // POST /api/auth/login
 router.post(
   "/login",
+  validateBody(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-
-    // Basic validation
-    if (!email || !password) {
-      throw new ValidationError("Email and password are required");
-    }
+    const { email, password } = (req as any).validatedBody as LoginInput;
 
     // Sign in with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -161,12 +167,9 @@ router.get(
 // POST /api/auth/refresh
 router.post(
   "/refresh",
+  validateBody(refreshTokenSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      throw new ValidationError("Refresh token is required");
-    }
+    const { refreshToken } = (req as any).validatedBody as RefreshTokenInput;
 
     // Refresh the session
     const { data, error } = await supabase.auth.refreshSession({
@@ -188,12 +191,9 @@ router.post(
 // POST /api/auth/forgot-password
 router.post(
   "/forgot-password",
+  validateBody(forgotPasswordSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
-
-    if (!email) {
-      throw new ValidationError("Email is required");
-    }
+    const { email } = (req as any).validatedBody as ForgotPasswordInput;
 
     // Send password reset email
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -211,12 +211,10 @@ router.post(
 // POST /api/auth/reset-password
 router.post(
   "/reset-password",
+  validateBody(resetPasswordSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { token, password } = req.body;
-
-    if (!token || !password) {
-      throw new ValidationError("Token and new password are required");
-    }
+    const { token, password } = (req as any)
+      .validatedBody as ResetPasswordInput;
 
     // Update password with the reset token
     const { error } = await supabase.auth.updateUser({
