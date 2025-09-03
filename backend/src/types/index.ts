@@ -1,28 +1,43 @@
-// Sample user interface
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  password?: string;
-  createdAt: Date;
-  updatedAt: Date;
+import {
+  User as PrismaUser,
+  Transcription as PrismaTranscription,
+  TranscriptionStatus,
+} from "@prisma/client";
+
+// Environment variables interface
+export interface EnvironmentVariables {
+  NODE_ENV: "development" | "production" | "test";
+  PORT: string;
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  DATABASE_URL: string;
+  DB_PASSWORD: string;
+  JWT_SECRET: string;
+  JWT_EXPIRES_IN: string;
+  CORS_ORIGIN: string;
+  RATE_LIMIT_WINDOW_MS: string;
+  RATE_LIMIT_MAX_REQUESTS: string;
 }
 
-// Sample transcription interface
-export interface Transcription {
-  id: string;
-  userId: string;
-  title: string;
-  text: string;
-  language: string;
-  confidence?: number;
-  duration?: number;
-  wordCount?: number;
-  fileUrl?: string;
-  status: "pending" | "processing" | "completed" | "failed";
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Export Prisma types with modifications
+export type User = PrismaUser;
+export type Transcription = PrismaTranscription;
+export { TranscriptionStatus };
+
+// Create user input type
+export type CreateUserInput = Omit<User, "id" | "createdAt" | "updatedAt">;
+export type UpdateUserInput = Partial<
+  Omit<User, "id" | "createdAt" | "updatedAt">
+>;
+
+// Create transcription input type
+export type CreateTranscriptionInput = Omit<
+  Transcription,
+  "id" | "createdAt" | "updatedAt"
+>;
+export type UpdateTranscriptionInput = Partial<
+  Omit<Transcription, "id" | "userId" | "createdAt" | "updatedAt">
+>;
 
 // API Response interfaces
 export interface ApiResponse<T = any> {

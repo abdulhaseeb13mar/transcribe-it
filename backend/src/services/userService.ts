@@ -1,60 +1,114 @@
-import { User } from "../types";
-
-// Mock database for demonstration
-const users: User[] = [];
+import { User, CreateUserInput, UpdateUserInput } from "../types";
+import { prisma } from "../lib/prisma";
 
 export class UserService {
-  async createUser(
-    userData: Omit<User, "id" | "createdAt" | "updatedAt">
-  ): Promise<User> {
-    const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...userData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async createUser(userData: CreateUserInput): Promise<User> {
+    try {
+      const user = await prisma.user.create({
+        data: {
+          email: userData.email,
+          name: userData.name,
+          password: userData.password,
+        },
+      });
 
-    users.push(user);
-    return user;
+      return user;
+    } catch (error: any) {
+      if (error.code === "P2002") {
+        throw new Error("User with this email already exists");
+      }
+      throw new Error(`Failed to create user: ${error.message}`);
+    }
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    return users.find((user) => user.email === email) || null;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      return user;
+    } catch (error: any) {
+      throw new Error(`Failed to find user: ${error.message}`);
+    }
   }
 
   async findUserById(id: string): Promise<User | null> {
-    return users.find((user) => user.id === id) || null;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+      });
+
+      return user;
+    } catch (error: any) {
+      throw new Error(`Failed to find user: ${error.message}`);
+    }
   }
 
-  async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-    const userIndex = users.findIndex((user) => user.id === id);
+  async updateUser(id: string, updates: UpdateUserInput): Promise<User | null> {
+    try {
+      const user = await prisma.user.update({
+        where: { id },
+        data: updates,
+      });
 
-    if (userIndex === -1) {
-      return null;
+      return user;
+    } catch (error: any) {
+      if (error.code === "P2025") {
+        return null; // User not found
+      }
+      if (error.code === "P2002") {
+        throw new Error("Email already in use");
+      }
+      throw new Error(`Failed to update user: ${error.message}`);
     }
-
-    const existingUser = users[userIndex];
-    users[userIndex] = {
-      ...existingUser,
-      ...updates,
-      updatedAt: new Date(),
-    };
-
-    return users[userIndex] || null;
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    const userIndex = users.findIndex((user) => user.id === id);
+    try {
+      await prisma.user.delete({
+        where: { id },
+      });
 
-    if (userIndex === -1) {
-      return false;
+      return true;
+    } catch (error: any) {
+      if (error.code === "P2025") {
+        return false; // User not found
+      }
+      throw new Error(`Failed to delete user: ${error.message}`);
     }
-
-    users.splice(userIndex, 1);
-    return true;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return users;
+    try {
+      const users = await prisma.user.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+
+      return users;
+    } catch (error: any) {
+      throw new Error(`Failed to get users: ${error.message}`);
+    }
+  }
+
+  async getUserWithTranscriptions(
+    id: string
+  ): Promise<(User & { transcriptions: any[] }) | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        include: {
+          transcriptions: {
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+
+      return user;
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get user with transcriptions: ${error.message}`
+      );
+    }
   }
 }

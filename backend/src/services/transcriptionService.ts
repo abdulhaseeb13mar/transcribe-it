@@ -1,25 +1,49 @@
-import { Transcription } from "../types";
-
-// Mock database for demonstration
-const transcriptions: Transcription[] = [];
+import {
+  Transcription,
+  CreateTranscriptionInput,
+  UpdateTranscriptionInput,
+  TranscriptionStatus,
+} from "../types";
+import { prisma } from "../lib/prisma";
 
 export class TranscriptionService {
   async createTranscription(
-    transcriptionData: Omit<Transcription, "id" | "createdAt" | "updatedAt">
+    transcriptionData: CreateTranscriptionInput
   ): Promise<Transcription> {
-    const transcription: Transcription = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...transcriptionData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    try {
+      const transcription = await prisma.transcription.create({
+        data: {
+          userId: transcriptionData.userId,
+          title: transcriptionData.title,
+          text: transcriptionData.text,
+          language: transcriptionData.language,
+          confidence: transcriptionData.confidence,
+          duration: transcriptionData.duration,
+          wordCount: transcriptionData.wordCount,
+          fileUrl: transcriptionData.fileUrl,
+          status: transcriptionData.status,
+        },
+      });
 
-    transcriptions.push(transcription);
-    return transcription;
+      return transcription;
+    } catch (error: any) {
+      throw new Error(`Failed to create transcription: ${error.message}`);
+    }
   }
 
   async findTranscriptionById(id: string): Promise<Transcription | null> {
-    return transcriptions.find((t) => t.id === id) || null;
+    try {
+      const transcription = await prisma.transcription.findUnique({
+        where: { id },
+        include: {
+          user: true,
+        },
+      });
+
+      return transcription;
+    } catch (error: any) {
+      throw new Error(`Failed to find transcription: ${error.message}`);
+    }
   }
 
   async findTranscriptionsByUserId(
@@ -27,47 +51,59 @@ export class TranscriptionService {
     page: number = 1,
     limit: number = 10
   ): Promise<{ transcriptions: Transcription[]; total: number }> {
-    const userTranscriptions = transcriptions.filter(
-      (t) => t.userId === userId
-    );
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    try {
+      const skip = (page - 1) * limit;
 
-    return {
-      transcriptions: userTranscriptions.slice(startIndex, endIndex),
-      total: userTranscriptions.length,
-    };
+      const [transcriptions, total] = await Promise.all([
+        prisma.transcription.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.transcription.count({
+          where: { userId },
+        }),
+      ]);
+
+      return { transcriptions, total };
+    } catch (error: any) {
+      throw new Error(`Failed to find transcriptions: ${error.message}`);
+    }
   }
 
   async updateTranscription(
     id: string,
-    updates: Partial<Transcription>
+    updates: UpdateTranscriptionInput
   ): Promise<Transcription | null> {
-    const transcriptionIndex = transcriptions.findIndex((t) => t.id === id);
+    try {
+      const transcription = await prisma.transcription.update({
+        where: { id },
+        data: updates,
+      });
 
-    if (transcriptionIndex === -1) {
-      return null;
+      return transcription;
+    } catch (error: any) {
+      if (error.code === "P2025") {
+        return null; // Transcription not found
+      }
+      throw new Error(`Failed to update transcription: ${error.message}`);
     }
-
-    const existingTranscription = transcriptions[transcriptionIndex];
-    transcriptions[transcriptionIndex] = {
-      ...existingTranscription,
-      ...updates,
-      updatedAt: new Date(),
-    };
-
-    return transcriptions[transcriptionIndex] || null;
   }
 
   async deleteTranscription(id: string): Promise<boolean> {
-    const transcriptionIndex = transcriptions.findIndex((t) => t.id === id);
+    try {
+      await prisma.transcription.delete({
+        where: { id },
+      });
 
-    if (transcriptionIndex === -1) {
-      return false;
+      return true;
+    } catch (error: any) {
+      if (error.code === "P2025") {
+        return false; // Transcription not found
+      }
+      throw new Error(`Failed to delete transcription: ${error.message}`);
     }
-
-    transcriptions.splice(transcriptionIndex, 1);
-    return true;
   }
 
   async searchTranscriptions(
@@ -76,19 +112,108 @@ export class TranscriptionService {
     page: number = 1,
     limit: number = 10
   ): Promise<{ transcriptions: Transcription[]; total: number }> {
-    const userTranscriptions = transcriptions.filter(
-      (t) =>
-        t.userId === userId &&
-        (t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.text.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    try {
+      const skip = (page - 1) * limit;
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+      const [transcriptions, total] = await Promise.all([
+        prisma.transcription.findMany({
+          where: {
+            userId,
+            OR: [
+              {
+                title: {
+                  contains: searchTerm,
+                  mode: "insensitive",
+                },
+              },
+              {
+                text: {
+                  contains: searchTerm,
+                  mode: "insensitive",
+                },
+              },
+            ],
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.transcription.count({
+          where: {
+            userId,
+            OR: [
+              {
+                title: {
+                  contains: searchTerm,
+                  mode: "insensitive",
+                },
+              },
+              {
+                text: {
+                  contains: searchTerm,
+                  mode: "insensitive",
+                },
+              },
+            ],
+          },
+        }),
+      ]);
 
-    return {
-      transcriptions: userTranscriptions.slice(startIndex, endIndex),
-      total: userTranscriptions.length,
-    };
+      return { transcriptions, total };
+    } catch (error: any) {
+      throw new Error(`Failed to search transcriptions: ${error.message}`);
+    }
+  }
+
+  async getTranscriptionsByStatus(
+    status: TranscriptionStatus,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ transcriptions: Transcription[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [transcriptions, total] = await Promise.all([
+        prisma.transcription.findMany({
+          where: { status },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+          include: {
+            user: true,
+          },
+        }),
+        prisma.transcription.count({
+          where: { status },
+        }),
+      ]);
+
+      return { transcriptions, total };
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get transcriptions by status: ${error.message}`
+      );
+    }
+  }
+
+  async updateTranscriptionStatus(
+    id: string,
+    status: TranscriptionStatus
+  ): Promise<Transcription | null> {
+    try {
+      const transcription = await prisma.transcription.update({
+        where: { id },
+        data: { status },
+      });
+
+      return transcription;
+    } catch (error: any) {
+      if (error.code === "P2025") {
+        return null; // Transcription not found
+      }
+      throw new Error(
+        `Failed to update transcription status: ${error.message}`
+      );
+    }
   }
 }

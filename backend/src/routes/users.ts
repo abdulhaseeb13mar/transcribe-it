@@ -1,23 +1,41 @@
 import { Router, Request, Response, IRouter } from "express";
 import { asyncHandler, sendResponse } from "../utils/helpers";
-import { authenticate, AuthenticatedRequest } from "../middleware/auth";
+import {
+  authenticateUser,
+  AuthenticatedRequest,
+} from "../middleware/supabaseAuth";
+import { UserService } from "../services/userService";
+import { TranscriptionService } from "../services/transcriptionService";
+import { ValidationError } from "../utils/errors";
 
 const router: IRouter = Router();
+const userService = new UserService();
+const transcriptionService = new TranscriptionService();
 
 // GET /api/users/profile
 router.get(
   "/profile",
-  authenticate,
+  authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    // TODO: Implement get user profile logic
-    // - Get user from database using req.user.id
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ValidationError("User not authenticated");
+    }
+
+    const user = await userService.findUserById(userId);
+
+    if (!user) {
+      throw new ValidationError("User not found");
+    }
 
     sendResponse(res, 200, true, "Profile retrieved successfully", {
       user: {
-        id: req.user?.id,
-        email: req.user?.email,
-        name: "John Doe",
-        createdAt: new Date().toISOString(),
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     });
   })
@@ -26,21 +44,38 @@ router.get(
 // PUT /api/users/profile
 router.put(
   "/profile",
-  authenticate,
+  authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { name, email } = req.body;
+    const userId = req.user?.id;
 
-    // TODO: Implement update user profile logic
-    // - Validate input
-    // - Update user in database
-    // - Return updated user
+    if (!userId) {
+      throw new ValidationError("User not authenticated");
+    }
+
+    // Validate input
+    if (!name && !email) {
+      throw new ValidationError(
+        "At least one field (name or email) is required"
+      );
+    }
+
+    // Update user profile
+    const updatedUser = await userService.updateUser(userId, {
+      ...(name && { name }),
+      ...(email && { email }),
+    });
+
+    if (!updatedUser) {
+      throw new ValidationError("Failed to update user profile");
+    }
 
     sendResponse(res, 200, true, "Profile updated successfully", {
       user: {
-        id: req.user?.id,
-        email: email || req.user?.email,
-        name: name || "John Doe",
-        updatedAt: new Date().toISOString(),
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        updatedAt: updatedUser.updatedAt,
       },
     });
   })
@@ -49,11 +84,20 @@ router.put(
 // DELETE /api/users/account
 router.delete(
   "/account",
-  authenticate,
+  authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    // TODO: Implement delete user account logic
-    // - Delete user from database
-    // - Clean up related data
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ValidationError("User not authenticated");
+    }
+
+    // Delete user account
+    const deleted = await userService.deleteUser(userId);
+
+    if (!deleted) {
+      throw new ValidationError("Failed to delete user account");
+    }
 
     sendResponse(res, 200, true, "Account deleted successfully");
   })
@@ -62,25 +106,33 @@ router.delete(
 // GET /api/users/transcriptions
 router.get(
   "/transcriptions",
-  authenticate,
+  authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    // TODO: Implement get user transcriptions logic
-    // - Get transcriptions for the authenticated user
-    // - Support pagination
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ValidationError("User not authenticated");
+    }
+
+    // Get pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    // Get user transcriptions
+    const { transcriptions, total } =
+      await transcriptionService.findTranscriptionsByUserId(
+        userId,
+        page,
+        limit
+      );
 
     sendResponse(res, 200, true, "Transcriptions retrieved successfully", {
-      transcriptions: [
-        {
-          id: "1",
-          title: "Sample Transcription",
-          text: "This is a sample transcription...",
-          createdAt: new Date().toISOString(),
-        },
-      ],
+      transcriptions,
       pagination: {
-        page: 1,
-        limit: 10,
-        total: 1,
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     });
   })

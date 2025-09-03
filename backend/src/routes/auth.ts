@@ -5,8 +5,15 @@ import {
   sendErrorResponse,
 } from "../utils/helpers";
 import { ValidationError } from "../utils/errors";
+import { supabase } from "../config/supabase";
+import {
+  authenticateUser,
+  AuthenticatedRequest,
+} from "../middleware/supabaseAuth";
+import { UserService } from "../services/userService";
 
 const router: IRouter = Router();
+const userService = new UserService();
 
 // POST /api/auth/register
 router.post(
@@ -19,19 +26,49 @@ router.post(
       throw new ValidationError("Email, password, and name are required");
     }
 
-    // TODO: Implement user registration logic
-    // - Hash password
-    // - Save user to database
-    // - Generate JWT token
-
-    sendResponse(res, 201, true, "User registered successfully", {
-      user: {
-        id: "123",
-        email,
-        name,
+    // Register user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+        },
       },
-      token: "mock-jwt-token",
     });
+
+    if (authError) {
+      throw new ValidationError(`Registration failed: ${authError.message}`);
+    }
+
+    // Create user profile in users table using Prisma
+    if (authData.user) {
+      try {
+        await userService.createUser({
+          email: authData.user.email || email,
+          name: name,
+          password: null, // Don't store password since Supabase handles auth
+        });
+      } catch (profileError: any) {
+        console.error("Profile creation error:", profileError);
+        // Continue even if profile creation fails
+      }
+    }
+
+    sendResponse(
+      res,
+      201,
+      true,
+      "User registered successfully. Please check your email for verification.",
+      {
+        user: {
+          id: authData.user?.id,
+          email: authData.user?.email,
+          name: name,
+        },
+        needsEmailVerification: !authData.user?.email_confirmed_at,
+      }
+    );
   })
 );
 
@@ -46,18 +83,28 @@ router.post(
       throw new ValidationError("Email and password are required");
     }
 
-    // TODO: Implement user login logic
-    // - Find user by email
-    // - Verify password
-    // - Generate JWT token
+    // Sign in with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw new ValidationError(`Login failed: ${error.message}`);
+    }
+
+    // Get user profile from users table using Prisma
+    const userProfile = await userService.findUserById(data.user.id);
 
     sendResponse(res, 200, true, "Login successful", {
       user: {
-        id: "123",
-        email,
-        name: "John Doe",
+        id: data.user.id,
+        email: data.user.email,
+        name: userProfile?.name || data.user.user_metadata?.name,
       },
-      token: "mock-jwt-token",
+      token: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
     });
   })
 );
@@ -65,9 +112,15 @@ router.post(
 // POST /api/auth/logout
 router.post(
   "/logout",
-  asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Implement logout logic
-    // - Invalidate token (if using blacklist)
+  authenticateUser,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    // Get token from header
+    const token = req.headers.authorization?.substring(7);
+
+    if (token) {
+      // Sign out with Supabase
+      await supabase.auth.signOut();
+    }
 
     sendResponse(res, 200, true, "Logout successful");
   })
@@ -76,18 +129,103 @@ router.post(
 // GET /api/auth/me
 router.get(
   "/me",
-  asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Implement get current user logic
-    // - Verify JWT token
-    // - Return user info
+  authenticateUser,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ValidationError("User not found");
+    }
+
+    // Get user profile from users table using Prisma
+    const userProfile = await userService.findUserById(userId);
+
+    if (!userProfile) {
+      throw new ValidationError("User profile not found");
+    }
 
     sendResponse(res, 200, true, "User info retrieved", {
       user: {
-        id: "123",
-        email: "john@example.com",
-        name: "John Doe",
+        id: userProfile.id,
+        email: userProfile.email,
+        name: userProfile.name,
+        createdAt: userProfile.createdAt,
+        updatedAt: userProfile.updatedAt,
       },
     });
+  })
+);
+
+// POST /api/auth/refresh
+router.post(
+  "/refresh",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      throw new ValidationError("Refresh token is required");
+    }
+
+    // Refresh the session
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error) {
+      throw new ValidationError(`Token refresh failed: ${error.message}`);
+    }
+
+    sendResponse(res, 200, true, "Token refreshed successfully", {
+      token: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
+    });
+  })
+);
+
+// POST /api/auth/forgot-password
+router.post(
+  "/forgot-password",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new ValidationError("Email is required");
+    }
+
+    // Send password reset email
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.CORS_ORIGIN}/reset-password`,
+    });
+
+    if (error) {
+      throw new ValidationError(`Password reset failed: ${error.message}`);
+    }
+
+    sendResponse(res, 200, true, "Password reset email sent successfully");
+  })
+);
+
+// POST /api/auth/reset-password
+router.post(
+  "/reset-password",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      throw new ValidationError("Token and new password are required");
+    }
+
+    // Update password with the reset token
+    const { error } = await supabase.auth.updateUser({
+      password: password,
+    });
+
+    if (error) {
+      throw new ValidationError(`Password reset failed: ${error.message}`);
+    }
+
+    sendResponse(res, 200, true, "Password reset successfully");
   })
 );
 
