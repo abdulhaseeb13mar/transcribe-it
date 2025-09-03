@@ -45,6 +45,7 @@ router.post(
         data: {
           name: name,
         },
+        // emailRedirectTo: "http://localhost:5173",
       },
     });
 
@@ -226,6 +227,148 @@ router.post(
     }
 
     sendResponse(res, 200, true, "Password reset successfully");
+  })
+);
+
+// GET /api/auth/confirm - Handle email confirmation redirect from Supabase
+router.get(
+  "/confirm",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { access_token, refresh_token, type, error, error_description } =
+      req.query;
+
+    // Handle error case
+    if (error) {
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      const errorMsg =
+        (error_description as string) || (error as string) || "Unknown error";
+      return res.redirect(
+        `${frontendUrl}/auth/confirm?error=${encodeURIComponent(errorMsg)}`
+      );
+    }
+
+    // Handle successful confirmation
+    if (type === "signup" && access_token && refresh_token) {
+      try {
+        // Set the session with the tokens from the URL
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: access_token as string,
+          refresh_token: refresh_token as string,
+        });
+        console.log("Session set successfully:", data);
+
+        if (sessionError) {
+          const frontendUrl =
+            process.env.FRONTEND_URL || "http://localhost:3000";
+          return res.redirect(
+            `${frontendUrl}/auth/confirm?error=${encodeURIComponent(
+              sessionError.message
+            )}`
+          );
+        }
+
+        if (data.user) {
+          // User email is now confirmed in Supabase
+          // Optionally update user profile in your database if needed
+          try {
+            const userProfile = await userService.findUserById(data.user.id);
+            if (!userProfile) {
+              // Create user profile if it doesn't exist
+              await userService.createUser({
+                email: data.user.email || "",
+                name: data.user.user_metadata?.name || "User",
+                role: UserRole.ADMIN,
+                organizationId: null,
+              });
+            }
+          } catch (profileError) {
+            console.error("Error updating user profile:", profileError);
+            // Continue even if profile update fails
+          }
+
+          // Redirect to frontend with success and tokens
+          const frontendUrl =
+            process.env.FRONTEND_URL || "http://localhost:3000";
+          return res.redirect(
+            `${frontendUrl}/auth/confirm?confirmed=true&access_token=${access_token}&refresh_token=${refresh_token}`
+          );
+        }
+      } catch (confirmError) {
+        console.error("Confirmation error:", confirmError);
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        return res.redirect(
+          `${frontendUrl}/auth/confirm?error=${encodeURIComponent(
+            "Confirmation failed"
+          )}`
+        );
+      }
+    }
+
+    // Fallback redirect for invalid or missing parameters
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    res.redirect(
+      `${frontendUrl}/auth/confirm?error=${encodeURIComponent(
+        "Invalid confirmation link"
+      )}`
+    );
+  })
+);
+
+// POST /api/auth/confirm-email - Manual email confirmation with tokens
+router.post(
+  "/confirm-email",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { access_token, refresh_token } = req.body;
+
+    if (!access_token || !refresh_token) {
+      throw new ValidationError("Access token and refresh token are required");
+    }
+
+    try {
+      // Set the session with the provided tokens
+      const { data, error } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      if (error) {
+        throw new ValidationError(
+          `Email confirmation failed: ${error.message}`
+        );
+      }
+
+      if (data.user) {
+        // Check if user profile exists, create if not
+        let userProfile = await userService.findUserById(data.user.id);
+
+        if (!userProfile) {
+          userProfile = await userService.createUser({
+            email: data.user.email || "",
+            name: data.user.user_metadata?.name || "User",
+            role: UserRole.ADMIN,
+            organizationId: null,
+          });
+        }
+
+        sendResponse(res, 200, true, "Email confirmed successfully", {
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            name: userProfile.name,
+            emailConfirmed: data.user.email_confirmed_at !== null,
+          },
+          session: {
+            access_token: data.session?.access_token,
+            refresh_token: data.session?.refresh_token,
+            expires_at: data.session?.expires_at,
+          },
+        });
+      } else {
+        throw new ValidationError("Invalid session data");
+      }
+    } catch (error: any) {
+      throw new ValidationError(`Email confirmation failed: ${error.message}`);
+    }
   })
 );
 
