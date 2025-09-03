@@ -1,8 +1,4 @@
-import {
-  User as PrismaUser,
-  Transcription as PrismaTranscription,
-  TranscriptionStatus,
-} from "@prisma/client";
+import { User as PrismaUser } from "@prisma/client";
 
 // Environment variables interface
 export interface EnvironmentVariables {
@@ -21,22 +17,11 @@ export interface EnvironmentVariables {
 
 // Export Prisma types with modifications
 export type User = PrismaUser;
-export type Transcription = PrismaTranscription;
-export { TranscriptionStatus };
 
 // Create user input type
 export type CreateUserInput = Omit<User, "id" | "createdAt" | "updatedAt">;
 export type UpdateUserInput = Partial<
   Omit<User, "id" | "createdAt" | "updatedAt">
->;
-
-// Create transcription input type
-export type CreateTranscriptionInput = Omit<
-  Transcription,
-  "id" | "createdAt" | "updatedAt"
->;
-export type UpdateTranscriptionInput = Partial<
-  Omit<Transcription, "id" | "userId" | "createdAt" | "updatedAt">
 >;
 
 // API Response interfaces

@@ -90,25 +90,4 @@ export class UserService {
       throw new Error(`Failed to get users: ${error.message}`);
     }
   }
-
-  async getUserWithTranscriptions(
-    id: string
-  ): Promise<(User & { transcriptions: any[] }) | null> {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id },
-        include: {
-          transcriptions: {
-            orderBy: { createdAt: "desc" },
-          },
-        },
-      });
-
-      return user;
-    } catch (error: any) {
-      throw new Error(
-        `Failed to get user with transcriptions: ${error.message}`
-      );
-    }
-  }
 }

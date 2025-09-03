@@ -22,38 +22,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  transcriptions Transcription[]
-
   @@map("users")
 }
 
-model Transcription {
-  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String             @map("user_id") @db.Uuid
-  title      String
-  text       String?
-  language   String             @default("en")
-  confidence Decimal?           @db.Decimal(5, 4)
-  duration   Int?               // duration in seconds
-  wordCount  Int?               @map("word_count")
-  fileUrl    String?            @map("file_url")
-  status     TranscriptionStatus @default(PENDING)
-  createdAt  DateTime           @default(now()) @map("created_at")
-  updatedAt  DateTime           @updatedAt @map("updated_at")
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("transcriptions")
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-enum TranscriptionStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}

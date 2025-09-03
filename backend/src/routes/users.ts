@@ -5,12 +5,10 @@ import {
   AuthenticatedRequest,
 } from "../middleware/supabaseAuth";
 import { UserService } from "../services/userService";
-import { TranscriptionService } from "../services/transcriptionService";
 import { ValidationError } from "../utils/errors";
 
 const router: IRouter = Router();
 const userService = new UserService();
-const transcriptionService = new TranscriptionService();
 
 // GET /api/users/profile
 router.get(
@@ -100,41 +98,6 @@ router.delete(
     }
 
     sendResponse(res, 200, true, "Account deleted successfully");
-  })
-);
-
-// GET /api/users/transcriptions
-router.get(
-  "/transcriptions",
-  authenticateUser,
-  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      throw new ValidationError("User not authenticated");
-    }
-
-    // Get pagination parameters
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-
-    // Get user transcriptions
-    const { transcriptions, total } =
-      await transcriptionService.findTranscriptionsByUserId(
-        userId,
-        page,
-        limit
-      );
-
-    sendResponse(res, 200, true, "Transcriptions retrieved successfully", {
-      transcriptions,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
   })
 );
 

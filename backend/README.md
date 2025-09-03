@@ -1,6 +1,6 @@
 # Transcribe It - Backend API
 
-A robust Express.js backend API for the Transcribe It application, built with TypeScript and designed for audio/video transcription services.
+A robust Express.js backend API for the Transcribe It application, built with TypeScript.
 
 ## Features
 
@@ -26,11 +26,9 @@ backend/
 │   ├── routes/             # API routes
 │   │   ├── auth.ts
 │   │   ├── users.ts
-│   │   ├── transcription.ts
 │   │   └── index.ts
 │   ├── services/           # Business logic
-│   │   ├── userService.ts
-│   │   └── transcriptionService.ts
+│   │   └── userService.ts
 │   ├── types/              # TypeScript interfaces
 │   │   └── index.ts
 │   ├── utils/              # Utility functions
@@ -112,16 +110,6 @@ backend/
 - `GET /api/users/profile` - Get user profile
 - `PUT /api/users/profile` - Update user profile
 - `DELETE /api/users/account` - Delete user account
-- `GET /api/users/transcriptions` - Get user's transcriptions
-
-### Transcription
-
-- `POST /api/transcription/upload` - Upload audio/video file
-- `POST /api/transcription/transcribe` - Start transcription process
-- `GET /api/transcription` - Get all transcriptions (paginated)
-- `GET /api/transcription/:id` - Get specific transcription
-- `PUT /api/transcription/:id` - Update transcription
-- `DELETE /api/transcription/:id` - Delete transcription
 
 ## Authentication
 
