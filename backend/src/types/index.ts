@@ -39,6 +39,9 @@ export type {
   ResetPasswordInput,
   UpdateProfileInput,
   CreateSuperAdminInput,
+  CreatePlanInput,
+  UpdatePlanInput,
+  PlanQueryParams,
 } from "../schemas";
 
 // API Response interfaces
