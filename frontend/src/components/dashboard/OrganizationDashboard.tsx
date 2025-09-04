@@ -18,7 +18,7 @@ export function OrganizationDashboard() {
   // Redirect to login if user is no longer authenticated or not an admin
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== UserRole.ADMIN) {
-      router.navigate({ to: '/login', search: { redirect: undefined } })
+      router.navigate({ to: '/', search: { redirect: undefined } })
     }
   }, [isAuthenticated, user, router])
 

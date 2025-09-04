@@ -10,7 +10,7 @@ export const Route = createFileRoute('/dashboard')({
     // Check if user is authenticated
     if (!isAuthenticated || !user) {
       throw redirect({
-        to: '/login',
+        to: '/',
         search: {
           redirect: undefined,
         },
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/dashboard')({
     // Check if user has admin role
     if (user.role !== UserRole.ADMIN) {
       throw redirect({
-        to: '/login',
+        to: '/',
         search: {
           redirect: undefined,
         },

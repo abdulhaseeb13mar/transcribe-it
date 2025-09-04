@@ -4,6 +4,7 @@ import authRoutes from "./auth";
 import adminRoutes from "./admin";
 import documentRoutes from "./documents";
 import creditsRoutes from "./credits";
+import planRoutes from "./plan";
 
 const router: IRouter = Router();
 
@@ -13,6 +14,7 @@ router.use("/users", userRoutes);
 router.use("/admin", adminRoutes);
 router.use("/document", documentRoutes);
 router.use("/credits", creditsRoutes);
+router.use("/plans", planRoutes);
 
 // API Info endpoint
 router.get("/", (req, res) => {
@@ -26,6 +28,7 @@ router.get("/", (req, res) => {
       admin: "/api/admin",
       document: "/api/document",
       credits: "/api/credits",
+      plans: "/api/plans",
     },
   });
 });
