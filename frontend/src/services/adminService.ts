@@ -4,10 +4,15 @@ export interface Organization {
   id: string
   name: string
   createdAt: string
+  updatedAt: string
   credits: number
-  users?: any[]
+  users?: {
+    id: string
+    name: string
+    email: string
+    role: string
+  }[]
   billing?: any
-  creditUsage?: any[]
 }
 
 export interface CreateOrganizationRequest {
@@ -15,12 +20,6 @@ export interface CreateOrganizationRequest {
   name: string
   email: string
   password: string
-}
-
-interface ApiResponse<T> {
-  success: boolean
-  message: string
-  data: T
 }
 
 interface OrganizationsResponse {
@@ -38,10 +37,10 @@ export class AdminService {
    */
   static async getOrganizations(): Promise<Organization[]> {
     try {
-      const response = await apiClient.get<ApiResponse<OrganizationsResponse>>(
+      const response = await apiClient.get<OrganizationsResponse>(
         '/admin/get-organizations',
       )
-      return response.data?.data?.organizations || []
+      return response.data?.organizations || []
     } catch (error) {
       console.error('Failed to fetch organizations:', error)
       throw error
@@ -55,14 +54,14 @@ export class AdminService {
     orgData: CreateOrganizationRequest,
   ): Promise<Organization> {
     try {
-      const response = await apiClient.post<ApiResponse<OrganizationResponse>>(
+      const response = await apiClient.post<OrganizationResponse>(
         '/auth/register-org',
         orgData,
       )
-      if (!response.data?.data?.organization) {
+      if (!response.data?.organization) {
         throw new Error('Organization creation failed')
       }
-      return response.data.data.organization
+      return response.data.organization
     } catch (error) {
       console.error('Failed to create organization:', error)
       throw error

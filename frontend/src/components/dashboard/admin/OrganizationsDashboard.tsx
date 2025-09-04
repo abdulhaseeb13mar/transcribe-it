@@ -19,15 +19,10 @@ import {
 } from '../../ui/dialog'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import type { CreateOrganizationRequest } from '@/services/adminService'
-
-export interface Organization {
-  id: string
-  name: string
-  email: string
-  createdAt: string
-  adminName: string
-}
+import type {
+  CreateOrganizationRequest,
+  Organization,
+} from '@/services/adminService'
 
 interface OrganizationsDashboardProps {
   organizations?: Organization[]
@@ -83,8 +78,8 @@ export function OrganizationsDashboard({
       try {
         setIsCreating(true)
         await onCreateOrganization({
-          name: newOrgForm.name,
           orgName: newOrgForm.name,
+          name: newOrgForm.adminName,
           email: newOrgForm.adminEmail,
           password: newOrgForm.adminPassword,
         })
@@ -218,8 +213,8 @@ export function OrganizationsDashboard({
             <TableHeader>
               <TableRow>
                 <TableHead>Organization</TableHead>
-                <TableHead>Admin Name</TableHead>
-                <TableHead>Admin Email</TableHead>
+                <TableHead>Credits</TableHead>
+                <TableHead>Users Count</TableHead>
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
@@ -237,9 +232,11 @@ export function OrganizationsDashboard({
                 organizations.map((org) => (
                   <TableRow key={org.id}>
                     <TableCell className="font-medium">{org.name}</TableCell>
-                    <TableCell>{org.adminName}</TableCell>
-                    <TableCell>{org.email}</TableCell>
-                    <TableCell>{org.createdAt}</TableCell>
+                    <TableCell>{org.credits}</TableCell>
+                    <TableCell>{org.users?.length || 0}</TableCell>
+                    <TableCell>
+                      {new Date(org.createdAt).toLocaleDateString()}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

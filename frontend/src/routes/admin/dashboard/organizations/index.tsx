@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { OrganizationsDashboard } from '../../../../components/dashboard/admin/OrganizationsDashboard'
-import type { Organization } from '../../../../components/dashboard/admin/OrganizationsDashboard'
+
 import {
   AdminService,
   type CreateOrganizationRequest,
+  type Organization,
 } from '../../../../services/adminService'
 
 export const Route = createFileRoute('/admin/dashboard/organizations/')({
@@ -25,37 +26,9 @@ function OrganizationsComponent() {
       setLoading(true)
       const data = await AdminService.getOrganizations()
       // Map backend organization data to frontend format
-      const mappedOrganizations: Organization[] = data.map((org) => {
-        const adminUser = org.users?.find((user: any) => user.role === 'ADMIN')
-        return {
-          id: org.id,
-          name: org.name,
-          email: adminUser?.email || 'No admin assigned',
-          createdAt: new Date(org.createdAt).toLocaleDateString(),
-          adminName: adminUser?.name || 'No admin assigned',
-        }
-      })
-      setOrganizations(mappedOrganizations)
+      setOrganizations(data)
     } catch (error) {
       console.error('Failed to load organizations:', error)
-      // Fallback to mock data for now
-      const mockOrganizations: Organization[] = [
-        {
-          id: '1',
-          name: 'Acme Corp',
-          email: 'admin@acme.com',
-          createdAt: '2024-01-15',
-          adminName: 'John Doe',
-        },
-        {
-          id: '2',
-          name: 'TechStart Inc',
-          email: 'admin@techstart.com',
-          createdAt: '2024-02-20',
-          adminName: 'Jane Smith',
-        },
-      ]
-      setOrganizations(mockOrganizations)
     } finally {
       setLoading(false)
     }
