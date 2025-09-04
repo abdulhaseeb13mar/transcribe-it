@@ -28,7 +28,7 @@ import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Textarea } from '../../ui/textarea'
 import { Switch } from '../../ui/switch'
-import type { CreatePlanRequest, Plan } from '@/services/plansService'
+import type { CreatePlanRequest, Plan } from '@/services/plansService2'
 import { PlanType } from '@/types/enums'
 
 interface PlansDashboardProps {
