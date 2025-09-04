@@ -4,7 +4,7 @@ import authRoutes from "./auth";
 import adminRoutes from "./admin";
 import documentRoutes from "./documents";
 import creditsRoutes from "./credits";
-import planRoutes from "./plan";
+import planRoutes from "./plans";
 
 const router: IRouter = Router();
 

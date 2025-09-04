@@ -127,6 +127,11 @@ export function OrganizationDashboard() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Plan management coming soon.
               </p>
+              <div className="mt-3">
+                <Button onClick={() => router.navigate({ to: '/dashboard/plans' })}>
+                  Manage Plans
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

@@ -183,15 +183,16 @@ function TranslatePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          Translate
-        </h1>
+        <div className="flex items-center gap-3 mb-6">
+    
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Translate</h1>
+        </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[340px,1fr]">
           <Card className="self-start">
             <CardHeader>
               <div className="flex items-center justify-between gap-4">
-                <CardTitle>Upload & Translate</CardTitle>
+              <CardTitle>Upload & Translate</CardTitle>
                 <div className="text-sm text-slate-600 dark:text-slate-300">
                   {credits !== null ? (
                     <span>
@@ -214,7 +215,7 @@ function TranslatePage() {
                   </Label>
                   <Input id="file" type="file" onChange={handleFileChange} />
                 </div>
-                <div className="min-w-[140px]">
+                <div className="min-w-[160px]">
                   <Label className="sr-only">Source Language</Label>
                   <Select value={sourceLang} onValueChange={setSourceLang}>
                     <SelectTrigger>

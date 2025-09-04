@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DashboardTranslateRouteImport } from './routes/dashboard/translate'
+import { Route as DashboardPlansRouteImport } from './routes/dashboard/plans'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
 import { Route as AdminDashboardUsersIndexRouteImport } from './routes/admin/dashboard/users/index'
@@ -56,6 +57,11 @@ const DashboardTranslateRoute = DashboardTranslateRouteImport.update({
   path: '/translate',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPlansRoute = DashboardPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/admin/dashboard': typeof AdminDashboardRouteWithChildren
+  '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/admin/dashboard': typeof AdminDashboardRouteWithChildren
+  '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/setup'
     | '/admin/dashboard'
+    | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin'
     | '/dashboard/'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/register'
     | '/setup'
+    | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin'
     | '/dashboard'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/setup'
     | '/admin/dashboard'
+    | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin/'
     | '/dashboard/'
@@ -217,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTranslateRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/plans': {
+      id: '/dashboard/plans'
+      path: '/plans'
+      fullPath: '/dashboard/plans'
+      preLoaderRoute: typeof DashboardPlansRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/admin/dashboard'
@@ -249,11 +268,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardPlansRoute: typeof DashboardPlansRoute
   DashboardTranslateRoute: typeof DashboardTranslateRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardPlansRoute: DashboardPlansRoute,
   DashboardTranslateRoute: DashboardTranslateRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
