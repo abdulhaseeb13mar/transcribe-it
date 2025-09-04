@@ -109,7 +109,7 @@ export class OrganizationService {
               role: true,
             },
           },
-          billing: true,
+          billing: { include: { plan: true } },
         },
       });
 

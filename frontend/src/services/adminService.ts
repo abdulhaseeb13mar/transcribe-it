@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient'
+import type { Plan } from './plansService2'
 
 export interface Organization {
   id: string
@@ -12,7 +13,20 @@ export interface Organization {
     email: string
     role: string
   }[]
-  billing?: any
+  billing?: {
+    id: string
+    organizationId: string
+    planId: string
+    subscriptionStatus: 'ACTIVE' | 'INACTIVE' | string
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    currentPeriodStart: string | null
+    currentPeriodEnd: string | null
+    cancelAtPeriodEnd: boolean
+    createdAt: string
+    updatedAt: string
+    plan: Plan
+  }
 }
 
 export interface CreateOrganizationRequest {

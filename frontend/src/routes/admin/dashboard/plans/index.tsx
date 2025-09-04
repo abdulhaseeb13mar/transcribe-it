@@ -1,8 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { PlansDashboard } from '../../../../components/dashboard/admin/plansDashboard'
-import { plansService } from '../../../../services/plansService'
-import type { Plan, CreatePlanRequest } from '../../../../services/plansService'
+import { plansService } from '../../../../services/plansService2'
+import type {
+  Plan,
+  CreatePlanRequest,
+} from '../../../../services/plansService2'
 
 export const Route = createFileRoute('/admin/dashboard/plans/')({
   component: PlansRoute,
