@@ -5,12 +5,32 @@ import { ValidationError } from "../utils/errors";
 import { prisma } from "../lib/prisma";
 import { UserRole } from "@prisma/client";
 import { UserService } from "../services/userService";
+import { PlanService } from "../services/planService";
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "../middleware/validation";
+import {
+  createPlanSchema,
+  updatePlanSchema,
+  planQuerySchema,
+  CreatePlanInput,
+  UpdatePlanInput,
+  PlanQueryParams,
+} from "../schemas/plan.schema";
+import { idParamSchema, IdParam } from "../schemas/common.schema";
 
-const router: IRouter = Router();
+// Export two routers from a single module to keep plans endpoints together
+export const orgPlansRouter: IRouter = Router();
+export const adminPlansRouter: IRouter = Router();
+
 const userService = new UserService();
+const planService = new PlanService();
 
+// =============== Org routes (/api/plans) ===============
 // GET /api/plans - list active plans and the user's current subscription (if any)
-router.get(
+orgPlansRouter.get(
   "/",
   authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -47,7 +67,7 @@ router.get(
 );
 
 // POST /api/plans/subscribe { planId }
-router.post(
+orgPlansRouter.post(
   "/subscribe",
   authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -69,7 +89,7 @@ router.post(
       throw new ValidationError("Plan not found or inactive");
     }
 
-    // Add credits and set subscription; simple billing logic for now
+    // Add credits and set subscription
     const orgId = user.organizationId;
     const [updatedOrg, updatedBilling, creditLog] = await prisma.$transaction([
       prisma.organization.update({
@@ -89,7 +109,7 @@ router.post(
       prisma.creditUsage.create({
         data: {
           organizationId: orgId,
-          creditsUsed: -plan.credits, // negative to represent addition
+          creditsUsed: -plan.credits,
           operation: "plan_purchase",
           metadata: { planId: plan.id, planName: plan.name, creditsAdded: plan.credits },
         },
@@ -108,5 +128,101 @@ router.post(
   })
 );
 
-export default router;
+// =============== Admin routes (/api/admin/plans) ===============
+// GET /api/admin/plans
+adminPlansRouter.get(
+  "/",
+  validateQuery(planQuerySchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const queryParams = req.query as unknown as PlanQueryParams;
+    const { plans, pagination } = await planService.getPlans(queryParams);
+    sendResponse(res, 200, true, "Plans retrieved successfully", { plans, pagination });
+  })
+);
 
+// GET /api/admin/plans/active
+adminPlansRouter.get(
+  "/active",
+  asyncHandler(async (req: Request, res: Response) => {
+    const plans = await planService.getActivePlans();
+    sendResponse(res, 200, true, "Active plans retrieved successfully", { plans });
+  })
+);
+
+// GET /api/admin/plans/:id
+adminPlansRouter.get(
+  "/:id",
+  validateParams(idParamSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params as IdParam;
+    const plan = await planService.getPlanById(id);
+    if (!plan) {
+      throw new ValidationError("Plan not found");
+    }
+    sendResponse(res, 200, true, "Plan retrieved successfully", { plan });
+  })
+);
+
+// POST /api/admin/plans
+adminPlansRouter.post(
+  "/",
+  authenticateUser,
+  validateBody(createPlanSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const planData = req.body as CreatePlanInput;
+    const existingPlan = await planService.getPlanByName(planData.name);
+    if (existingPlan) {
+      throw new ValidationError("Plan with this name already exists");
+    }
+    const plan = await planService.createPlan(planData);
+    sendResponse(res, 201, true, "Plan created successfully", { plan });
+  })
+);
+
+// PUT /api/admin/plans/:id
+adminPlansRouter.put(
+  "/:id",
+  authenticateUser,
+  validateParams(idParamSchema),
+  validateBody(updatePlanSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError("Insufficient permissions. Super admin access required.");
+    }
+    const { id } = req.params as IdParam;
+    const planData = req.body as UpdatePlanInput;
+    const existingPlan = await planService.getPlanById(id);
+    if (!existingPlan) {
+      throw new ValidationError("Plan not found");
+    }
+    if (planData.name && planData.name !== existingPlan.name) {
+      const planWithSameName = await planService.getPlanByName(planData.name);
+      if (planWithSameName) {
+        throw new ValidationError("Plan with this name already exists");
+      }
+    }
+    const updatedPlan = await planService.updatePlan(id, planData);
+    sendResponse(res, 200, true, "Plan updated successfully", { plan: updatedPlan });
+  })
+);
+
+// DELETE /api/admin/plans/:id
+adminPlansRouter.delete(
+  "/:id",
+  authenticateUser,
+  validateParams(idParamSchema),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError("Insufficient permissions. Super admin access required.");
+    }
+    const { id } = req.params as IdParam;
+    const existingPlan = await planService.getPlanById(id);
+    if (!existingPlan) {
+      throw new ValidationError("Plan not found");
+    }
+    await planService.deletePlan(id);
+    sendResponse(res, 200, true, "Plan deleted successfully");
+  })
+);
+
+export default orgPlansRouter;

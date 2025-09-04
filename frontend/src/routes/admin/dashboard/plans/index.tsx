@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { PlansDashboard } from '../../../../components/dashboard/admin/plansDashboard'
-import { plansService } from '../../../../services/plansService2'
+import { plansService } from '../../../../services/plansService'
 import type {
   Plan,
   CreatePlanRequest,
-} from '../../../../services/plansService2'
+} from '../../../../services/plansService'
 
 export const Route = createFileRoute('/admin/dashboard/plans/')({
   component: PlansRoute,
@@ -20,7 +20,7 @@ function PlansRoute() {
     try {
       setLoading(true)
       setError(null)
-      const response = await plansService.getPlans()
+      const response = await plansService.adminGetPlans()
 
       if (response.success && response.data) {
         setPlans(response.data.plans)

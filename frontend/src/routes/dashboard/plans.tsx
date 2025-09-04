@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { useEffect, useState } from 'react'
 import { store, useSelector } from '../../store'
 import { plansService, type PlansInfoResponse } from '../../services/plansService'
@@ -19,7 +19,6 @@ export const Route = createFileRoute('/dashboard/plans')({
 })
 
 function PlansPage() {
-  const router = useRouter()
   const token = useSelector((s) => s.auth.session?.token)
   const [data, setData] = useState<PlansInfoResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,7 +32,7 @@ function PlansPage() {
       try {
         setLoading(true)
         const [plansRes, creditsRes] = await Promise.all([
-          plansService.getPlans(),
+          plansService.getOrgPlans(),
           creditService.getMyCredits(),
         ])
         if (plansRes.success && plansRes.data) setData(plansRes.data)
