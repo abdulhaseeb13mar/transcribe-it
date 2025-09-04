@@ -20,6 +20,7 @@ import { Route as DashboardPlansRouteImport } from './routes/dashboard/plans'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
 import { Route as AdminDashboardUsersIndexRouteImport } from './routes/admin/dashboard/users/index'
+import { Route as AdminDashboardPlansIndexRouteImport } from './routes/admin/dashboard/plans/index'
 import { Route as AdminDashboardOrganizationsIndexRouteImport } from './routes/admin/dashboard/organizations/index'
 
 const SetupRoute = SetupRouteImport.update({
@@ -78,6 +79,12 @@ const AdminDashboardUsersIndexRoute =
     path: '/users/',
     getParentRoute: () => AdminDashboardRoute,
   } as any)
+const AdminDashboardPlansIndexRoute =
+  AdminDashboardPlansIndexRouteImport.update({
+    id: '/plans/',
+    path: '/plans/',
+    getParentRoute: () => AdminDashboardRoute,
+  } as any)
 const AdminDashboardOrganizationsIndexRoute =
   AdminDashboardOrganizationsIndexRouteImport.update({
     id: '/organizations/',
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/dashboard/organizations': typeof AdminDashboardOrganizationsIndexRoute
+  '/admin/dashboard/plans': typeof AdminDashboardPlansIndexRoute
   '/admin/dashboard/users': typeof AdminDashboardUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/dashboard/organizations': typeof AdminDashboardOrganizationsIndexRoute
+  '/admin/dashboard/plans': typeof AdminDashboardPlansIndexRoute
   '/admin/dashboard/users': typeof AdminDashboardUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/dashboard/organizations/': typeof AdminDashboardOrganizationsIndexRoute
+  '/admin/dashboard/plans/': typeof AdminDashboardPlansIndexRoute
   '/admin/dashboard/users/': typeof AdminDashboardUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/admin/dashboard/'
     | '/admin/dashboard/organizations'
+    | '/admin/dashboard/plans'
     | '/admin/dashboard/users'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/admin/dashboard'
     | '/admin/dashboard/organizations'
+    | '/admin/dashboard/plans'
     | '/admin/dashboard/users'
   id:
     | '__root__'
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/admin/dashboard/'
     | '/admin/dashboard/organizations/'
+    | '/admin/dashboard/plans/'
     | '/admin/dashboard/users/'
   fileRoutesById: FileRoutesById
 }
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardUsersIndexRouteImport
       parentRoute: typeof AdminDashboardRoute
     }
+    '/admin/dashboard/plans/': {
+      id: '/admin/dashboard/plans/'
+      path: '/plans'
+      fullPath: '/admin/dashboard/plans'
+      preLoaderRoute: typeof AdminDashboardPlansIndexRouteImport
+      parentRoute: typeof AdminDashboardRoute
+    }
     '/admin/dashboard/organizations/': {
       id: '/admin/dashboard/organizations/'
       path: '/organizations'
@@ -286,12 +306,14 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 interface AdminDashboardRouteChildren {
   AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
   AdminDashboardOrganizationsIndexRoute: typeof AdminDashboardOrganizationsIndexRoute
+  AdminDashboardPlansIndexRoute: typeof AdminDashboardPlansIndexRoute
   AdminDashboardUsersIndexRoute: typeof AdminDashboardUsersIndexRoute
 }
 
 const AdminDashboardRouteChildren: AdminDashboardRouteChildren = {
   AdminDashboardIndexRoute: AdminDashboardIndexRoute,
   AdminDashboardOrganizationsIndexRoute: AdminDashboardOrganizationsIndexRoute,
+  AdminDashboardPlansIndexRoute: AdminDashboardPlansIndexRoute,
   AdminDashboardUsersIndexRoute: AdminDashboardUsersIndexRoute,
 }
 
