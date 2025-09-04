@@ -33,6 +33,7 @@ export type UpdateUserInput = Partial<
 // Re-export Zod schema types (these are now the primary types)
 export type {
   RegisterInput,
+  RegisterOrgInput,
   LoginInput,
   RefreshTokenInput,
   ForgotPasswordInput,
