@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import {
@@ -21,6 +21,8 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { logoutUser } from '../../store/authThunks'
 import { dispatch, useSelector } from '@/store'
+import { useRouter } from '@tanstack/react-router'
+import { UserRole } from '../../types/enums'
 
 interface Organization {
   id: string
@@ -41,11 +43,20 @@ interface User {
 
 export function SuperAdminDashboard() {
   const user = useSelector((state) => state.auth.user)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
+  const router = useRouter()
 
   const [activeTab, setActiveTab] = useState<
     'overview' | 'organizations' | 'users'
   >('overview')
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false)
+
+  // Redirect to admin login if user is no longer authenticated or not a super admin
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== UserRole.SUPER_ADMIN) {
+      router.navigate({ to: '/admin', search: { redirect: undefined } })
+    }
+  }, [isAuthenticated, user, router])
   const [newOrgForm, setNewOrgForm] = useState({
     name: '',
     adminName: '',

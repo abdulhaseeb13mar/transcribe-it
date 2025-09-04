@@ -1,10 +1,22 @@
+import { useEffect } from 'react'
 import { dispatch, useSelector } from '@/store'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { logoutUser } from '../../store/authThunks'
+import { useRouter } from '@tanstack/react-router'
+import { UserRole } from '../../types/enums'
 
 export function OrganizationDashboard() {
   const user = useSelector((state) => state.auth.user)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
+  const router = useRouter()
+
+  // Redirect to login if user is no longer authenticated or not an admin
+  useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== UserRole.ADMIN) {
+      router.navigate({ to: '/login' })
+    }
+  }, [isAuthenticated, user, router])
 
   const handleLogout = () => {
     dispatch(logoutUser())

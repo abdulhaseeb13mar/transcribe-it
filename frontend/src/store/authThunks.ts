@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { authService } from '../services/authService'
+import { apiClient } from '../services/apiClient'
 import type {
   LoginRequest,
   RegisterOrgRequest,
@@ -29,6 +30,7 @@ export const loginUser = createAsyncThunk(
       }
 
       const { token, refreshToken, expiresAt } = response.data
+      apiClient.setToken(token)
 
       // Get user profile to check role
       const profileResponse = await authService.getUserProfile()
@@ -54,6 +56,9 @@ export const loginUser = createAsyncThunk(
         expiresAt,
       }
 
+      // Set the token in the API client for immediate use
+      apiClient.setToken(token)
+
       return { user, session }
     } catch (error: any) {
       return rejectWithValue(error.message || 'Login failed')
@@ -77,6 +82,7 @@ export const loginSuperAdmin = createAsyncThunk(
       }
 
       const { token, refreshToken, expiresAt } = response.data
+      apiClient.setToken(token)
 
       // Get user profile to check role
       const profileResponse = await authService.getUserProfile()
@@ -106,6 +112,9 @@ export const loginSuperAdmin = createAsyncThunk(
         refreshToken,
         expiresAt,
       }
+
+      // Set the token in the API client for immediate use
+      apiClient.setToken(token)
 
       return { user, session }
     } catch (error: any) {
@@ -211,12 +220,14 @@ export const checkSuperAdminExists = createAsyncThunk(
 export const logoutUser = createAsyncThunk('auth/logout', async () => {
   try {
     await authService.logout()
-    return true
   } catch (error: any) {
     // Even if logout fails on server, we should clear local state
     console.warn('Logout request failed, but clearing local state:', error)
-    return true
+  } finally {
+    // Always clear the token from API client
+    apiClient.clearToken()
   }
+  return true
 })
 
 // Get user profile thunk

@@ -1,9 +1,5 @@
 import { Router, Request, Response, IRouter } from "express";
-import {
-  asyncHandler,
-  sendResponse,
-  sendErrorResponse,
-} from "../utils/helpers";
+import { asyncHandler, sendResponse } from "../utils/helpers";
 import { ValidationError } from "../utils/errors";
 import { supabase } from "../config/supabase";
 import {
@@ -13,7 +9,7 @@ import {
 import { UserService } from "../services/userService";
 import { OrganizationService } from "../services/organizationService";
 import { UserRole } from "@prisma/client";
-import { validateBody, ValidatedRequest } from "../middleware/validation";
+import { validateBody } from "../middleware/validation";
 import {
   registerSchema,
   registerOrgSchema,
@@ -231,27 +227,22 @@ router.get(
   "/me",
   authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.user?.id;
+    // const userId = req.user?.id;
+    const userEmail = req.user?.email;
 
-    if (!userId) {
+    if (!userEmail) {
       throw new ValidationError("User not found");
     }
 
     // Get user profile from users table using Prisma
-    const userProfile = await userService.findUserById(userId);
+    const userProfile = await userService.findUserByEmail(userEmail);
 
     if (!userProfile) {
       throw new ValidationError("User profile not found");
     }
 
     sendResponse(res, 200, true, "User info retrieved", {
-      user: {
-        id: userProfile.id,
-        email: userProfile.email,
-        name: userProfile.name,
-        createdAt: userProfile.createdAt,
-        updatedAt: userProfile.updatedAt,
-      },
+      user: userProfile,
     });
   })
 );
