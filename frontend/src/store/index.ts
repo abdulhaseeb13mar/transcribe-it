@@ -12,22 +12,30 @@ import {
 import storage from 'redux-persist/lib/storage'
 import { combineReducers } from '@reduxjs/toolkit'
 import appReducer from './slices/appSlice'
+import authReducer from './slices/authSlice'
+import {
+  useSelector as useAppSelector,
+  type TypedUseSelectorHook,
+} from 'react-redux'
 
-const persistConfig = {
-  key: 'root',
+// Auth persist config - exclude error and isLoading
+const authPersistConfig = {
+  key: 'auth',
   storage,
-  // You can whitelist specific reducers if needed
-  // whitelist: ['app']
+  blacklist: ['error', 'isLoading'],
 }
 
-const rootReducer = combineReducers({
+// Create persisted auth reducer
+const persistedAuthReducer = persistReducer(authPersistConfig, authReducer)
+
+// Combine with persisted auth reducer
+const persistedRootReducer = combineReducers({
   app: appReducer,
+  auth: persistedAuthReducer,
 })
 
-const persistedReducer = persistReducer(persistConfig, rootReducer)
-
-export const store = configureStore({
-  reducer: persistedReducer,
+const store = configureStore({
+  reducer: persistedRootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -40,3 +48,10 @@ export const persistor = persistStore(store)
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
+
+const { dispatch } = store
+
+// const useDispatch = () => useAppDispatch<AppDispatch>()
+const useSelector: TypedUseSelectorHook<RootState> = useAppSelector
+
+export { store, dispatch, useSelector }
