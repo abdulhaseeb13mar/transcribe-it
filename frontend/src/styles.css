@@ -173,3 +173,28 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+/* Lightweight markdown styling without typography plugin */
+.prose-styles {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.prose-styles h1 { @apply text-2xl font-bold mt-4 mb-3; }
+.prose-styles h2 { @apply text-xl font-semibold mt-4 mb-2; }
+.prose-styles h3 { @apply text-lg font-semibold mt-3 mb-2; }
+.prose-styles p { @apply my-2; }
+.prose-styles ul { @apply list-disc pl-6 my-2; }
+.prose-styles ol { @apply list-decimal pl-6 my-2; }
+.prose-styles li { @apply my-1; }
+.prose-styles code { @apply bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded px-1 py-0.5; }
+.prose-styles pre { @apply bg-slate-950 text-slate-100 p-3 rounded my-3 overflow-auto; }
+.prose-styles blockquote { @apply border-l-4 border-slate-300 dark:border-slate-700 pl-3 italic my-3; }
+.prose-styles hr { @apply my-4 border-slate-200 dark:border-slate-700; }
+
+/* Tables (GFM) */
+.prose-styles table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+.prose-styles thead tr { background-color: color-mix(in oklab, var(--background) 70%, var(--foreground) 5%); }
+.prose-styles th, .prose-styles td { @apply border border-slate-200 dark:border-slate-700 text-left align-top p-2; }
+.prose-styles th { @apply font-semibold; }
+
+.dark .prose-styles thead tr { background-color: color-mix(in oklab, var(--background) 80%, var(--foreground) 10%); }
