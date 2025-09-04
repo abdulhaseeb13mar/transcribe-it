@@ -1,5 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { OrganizationDashboard } from '../components/dashboard/OrganizationDashboard'
+import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
 import { store } from '../store'
 import { UserRole } from '../types/enums'
 
@@ -28,9 +27,9 @@ export const Route = createFileRoute('/dashboard')({
       })
     }
   },
-  component: DashboardPage,
+  component: DashboardLayout,
 })
 
-function DashboardPage() {
-  return <OrganizationDashboard />
+function DashboardLayout() {
+  return <Outlet />
 }

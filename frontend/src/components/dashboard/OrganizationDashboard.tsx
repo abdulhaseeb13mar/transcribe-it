@@ -75,6 +75,20 @@ export function OrganizationDashboard() {
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Translate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Convert text or files into different languages.
+              </p>
+              <Button onClick={() => router.navigate({ to: '/dashboard/translate' })}>
+                Go to Translate
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
