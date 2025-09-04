@@ -20,6 +20,9 @@ export function OrganizationDashboard() {
 
   const handleLogout = () => {
     dispatch(logoutUser())
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
   }
 
   return (
@@ -84,7 +87,9 @@ export function OrganizationDashboard() {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Convert text or files into different languages.
               </p>
-              <Button onClick={() => router.navigate({ to: '/dashboard/translate' })}>
+              <Button
+                onClick={() => router.navigate({ to: '/dashboard/translate' })}
+              >
                 Go to Translate
               </Button>
             </CardContent>
