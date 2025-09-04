@@ -5,11 +5,11 @@ import { OrganizationService } from "../services/organizationService";
 import { ValidationError } from "../utils/errors";
 import { supabaseAdmin } from "../config/supabase"; // Updated to use admin client
 import { validateBody } from "../middleware/validation";
-import { authenticate } from "../middleware/auth";
 import {
   createSuperAdminSchema,
   CreateSuperAdminInput,
 } from "../schemas/admin.schema";
+import { authenticateUser } from "../middleware/supabaseAuth";
 
 const router: IRouter = Router();
 const userService = new UserService();
@@ -94,7 +94,7 @@ router.get(
 // Fetches all organizations - requires admin authentication
 router.get(
   "/get-organizations",
-  authenticate,
+  authenticateUser,
   asyncHandler(async (req: Request, res: Response) => {
     const organizations = await organizationService.getAllOrganizations();
 

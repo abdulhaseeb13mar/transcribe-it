@@ -97,10 +97,20 @@ export class OrganizationService {
     try {
       const organizations = await prisma.organization.findMany({
         orderBy: { createdAt: "desc" },
-        // include: {
-        //   users: true,
-        //   billing: true,
-        // },
+        include: {
+          users: {
+            where: {
+              role: "ADMIN", // Only include admin users
+            },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+          billing: true,
+        },
       });
 
       return organizations;
