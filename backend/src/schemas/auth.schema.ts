@@ -25,6 +25,39 @@ export const registerSchema = z.object({
     ),
 });
 
+// Organization registration schema (register + organization creation)
+export const registerOrgSchema = z.object({
+  email: z
+    .string()
+    .email("Invalid email format")
+    .min(1, "Email is required")
+    .max(255, "Email must be less than 255 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .max(100, "Password must be less than 100 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+    ),
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters long")
+    .max(100, "Name must be less than 100 characters")
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      "Name can only contain letters, spaces, hyphens, and apostrophes"
+    ),
+  orgName: z
+    .string()
+    .min(2, "Organization name must be at least 2 characters long")
+    .max(100, "Organization name must be less than 100 characters")
+    .regex(
+      /^[a-zA-Z0-9\s'-.,&]+$/,
+      "Organization name can only contain letters, numbers, spaces, hyphens, apostrophes, periods, commas, and ampersands"
+    ),
+});
+
 // Auth login schema
 export const loginSchema = z.object({
   email: z.string().email("Invalid email format").min(1, "Email is required"),
@@ -56,6 +89,7 @@ export const resetPasswordSchema = z.object({
 
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type RegisterOrgInput = z.infer<typeof registerOrgSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
