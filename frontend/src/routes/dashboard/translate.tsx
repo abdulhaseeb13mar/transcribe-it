@@ -6,11 +6,22 @@ import { store } from '../../store'
 import { UserRole } from '../../types/enums'
 import { documentService } from '../../services/documentService'
 import { Button } from '../../components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 // no Textarea needed; rendering markdown view
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select'
 
 export const Route = createFileRoute('/dashboard/translate')({
   beforeLoad: () => {
@@ -114,9 +125,15 @@ function TranslatePage() {
     `
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>${styles}</head><body>${contentHtml}</body></html>`
     try {
-      const mod: any = await import('html-docx-js/dist/html-docx')
-      const api = mod?.default ?? mod
-      const blob = api.asBlob(html)
+      const { default: HTMLtoDOCX } = await import('html-to-docx')
+      const docxBuffer = await HTMLtoDOCX(html, null, {
+        table: { row: { cantSplit: true } },
+        footer: true,
+        pageNumber: true,
+      })
+      const blob = new Blob([docxBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -141,7 +158,9 @@ function TranslatePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Translate</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+          Translate
+        </h1>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[340px,1fr]">
           <Card className="self-start">
@@ -151,7 +170,9 @@ function TranslatePage() {
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <div className="flex-1">
-                  <Label htmlFor="file" className="sr-only">Document</Label>
+                  <Label htmlFor="file" className="sr-only">
+                    Document
+                  </Label>
                   <Input id="file" type="file" onChange={handleFileChange} />
                 </div>
                 <div className="min-w-[140px]">
@@ -171,12 +192,18 @@ function TranslatePage() {
                 </div>
               </div>
 
-              <Button className="w-full md:w-auto" onClick={handleTranslate} disabled={translating || !file}>
+              <Button
+                className="w-full md:w-auto"
+                onClick={handleTranslate}
+                disabled={translating || !file}
+              >
                 {translating ? 'Translating...' : 'Translate'}
               </Button>
 
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -184,14 +211,25 @@ function TranslatePage() {
           <Card className="self-start">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Translation (English)</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleExportDocx} disabled={!translation || translating}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportDocx}
+                disabled={!translation || translating}
+              >
                 Download
               </Button>
             </CardHeader>
             <CardContent>
-              <div ref={viewerRef} className="h-[70vh] overflow-auto rounded-md border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 p-4 text-slate-800 dark:text-slate-100">
+              <div
+                ref={viewerRef}
+                className="h-[70vh] overflow-auto rounded-md border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/40 p-4 text-slate-800 dark:text-slate-100"
+              >
                 {translation ? (
-                  <ReactMarkdown className="prose-styles" remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown
+                    className="prose-styles"
+                    remarkPlugins={[remarkGfm]}
+                  >
                     {translation}
                   </ReactMarkdown>
                 ) : (
