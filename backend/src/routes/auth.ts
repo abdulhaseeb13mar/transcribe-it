@@ -11,15 +11,18 @@ import {
   AuthenticatedRequest,
 } from "../middleware/supabaseAuth";
 import { UserService } from "../services/userService";
+import { OrganizationService } from "../services/organizationService";
 import { UserRole } from "@prisma/client";
 import { validateBody, ValidatedRequest } from "../middleware/validation";
 import {
   registerSchema,
+  registerOrgSchema,
   loginSchema,
   refreshTokenSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   RegisterInput,
+  RegisterOrgInput,
   LoginInput,
   RefreshTokenInput,
   ForgotPasswordInput,
@@ -28,6 +31,7 @@ import {
 
 const router: IRouter = Router();
 const userService = new UserService();
+const organizationService = new OrganizationService();
 
 // POST /api/auth/register
 router.post(
@@ -82,6 +86,93 @@ router.post(
         needsEmailVerification: !authData.user?.email_confirmed_at,
       }
     );
+  })
+);
+
+// POST /api/auth/register-org
+router.post(
+  "/register-org",
+  validateBody(registerOrgSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email, password, name, orgName } = (req as any)
+      .validatedBody as RegisterOrgInput;
+
+    // Check if organization name already exists
+    const existingOrg = await organizationService.findOrganizationByName(
+      orgName
+    );
+    if (existingOrg) {
+      throw new ValidationError("Organization with this name already exists");
+    }
+
+    // Register user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+        },
+        // emailRedirectTo: "http://localhost:5173",
+      },
+    });
+
+    if (authError) {
+      throw new ValidationError(`Registration failed: ${authError.message}`);
+    }
+
+    if (authData.user) {
+      try {
+        // Create organization first
+        const organization = await organizationService.createOrganization({
+          name: orgName,
+          credits: 0, // Default credits for new organizations
+        });
+
+        // Create user profile with organization and ADMIN role
+        const userProfile = await userService.createUser({
+          email: authData.user.email || email,
+          name: name,
+          role: UserRole.ADMIN, // Admin role for organization creator
+          organizationId: organization.id,
+        });
+
+        sendResponse(
+          res,
+          201,
+          true,
+          "Organization and admin user registered successfully. Please check your email for verification.",
+          {
+            user: {
+              id: authData.user.id,
+              email: authData.user.email,
+              name: name,
+              role: userProfile.role,
+            },
+            organization: {
+              id: organization.id,
+              name: organization.name,
+              credits: organization.credits,
+            },
+            needsEmailVerification: !authData.user?.email_confirmed_at,
+          }
+        );
+      } catch (error: any) {
+        console.error("Organization/profile creation error:", error);
+
+        // If organization or user creation fails after Supabase registration,
+        // we should clean up the Supabase user to maintain consistency
+        try {
+          await supabase.auth.admin.deleteUser(authData.user.id);
+        } catch (cleanupError) {
+          console.error("Failed to cleanup Supabase user:", cleanupError);
+        }
+
+        throw new ValidationError(`Registration failed: ${error.message}`);
+      }
+    } else {
+      throw new ValidationError("Failed to create user account");
+    }
   })
 );
 
