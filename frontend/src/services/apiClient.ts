@@ -49,16 +49,26 @@ class ApiClient {
       // Try to get from the persisted auth state
       const persistedAuthState = localStorage.getItem('persist:auth')
       if (persistedAuthState) {
-        const authState = JSON.parse(persistedAuthState)
-        return authState?.session?.refreshToken || null
+        const outer = JSON.parse(persistedAuthState)
+        const sessionRaw = outer?.session
+        if (typeof sessionRaw === 'string') {
+          const session = JSON.parse(sessionRaw)
+          return session?.refreshToken || null
+        }
+        return null
       }
 
       // Fallback: try to get from root persist state (if store structure changes)
       const persistedRootState = localStorage.getItem('persist:root')
       if (persistedRootState) {
         const parsed = JSON.parse(persistedRootState)
-        const authState = JSON.parse(parsed.auth)
-        return authState?.session?.refreshToken || null
+        const authOuter = JSON.parse(parsed.auth)
+        const sessionRaw = authOuter?.session
+        if (typeof sessionRaw === 'string') {
+          const session = JSON.parse(sessionRaw)
+          return session?.refreshToken || null
+        }
+        return null
       }
     } catch (error) {
       console.warn('Failed to retrieve stored refresh token:', error)
@@ -169,16 +179,26 @@ class ApiClient {
       // Try to get from the persisted auth state
       const persistedAuthState = localStorage.getItem('persist:auth')
       if (persistedAuthState) {
-        const authState = JSON.parse(persistedAuthState)
-        return authState?.session?.token || null
+        const outer = JSON.parse(persistedAuthState)
+        const sessionRaw = outer?.session
+        if (typeof sessionRaw === 'string') {
+          const session = JSON.parse(sessionRaw)
+          return session?.token || null
+        }
+        return null
       }
 
       // Fallback: try to get from root persist state (if store structure changes)
       const persistedRootState = localStorage.getItem('persist:root')
       if (persistedRootState) {
         const parsed = JSON.parse(persistedRootState)
-        const authState = JSON.parse(parsed.auth)
-        return authState?.session?.token || null
+        const authOuter = JSON.parse(parsed.auth)
+        const sessionRaw = authOuter?.session
+        if (typeof sessionRaw === 'string') {
+          const session = JSON.parse(sessionRaw)
+          return session?.token || null
+        }
+        return null
       }
     } catch (error) {
       console.warn('Failed to retrieve stored token:', error)

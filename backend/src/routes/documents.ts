@@ -2,6 +2,9 @@ import { Router, Request, Response, IRouter } from "express";
 import { asyncHandler, sendResponse } from "../utils/helpers";
 import { ValidationError } from "../utils/errors";
 import { DocumentService } from "../services/documentService";
+import { CreditService } from "../services/creditService";
+import { UserService } from "../services/userService";
+import { AuthenticatedRequest } from "../middleware/supabaseAuth";
 import { authenticateUser } from "../middleware/supabaseAuth";
 
 // Multer is optional at author time; if not installed here, we gracefully fallback to base64 input.
@@ -13,6 +16,8 @@ try {
 
 const router: IRouter = Router();
 const documentService = new DocumentService();
+const creditService = new CreditService();
+const userService = new UserService();
 
 // If multer is available, configure it for in-memory storage
 const upload = multer ? multer({ storage: multer.memoryStorage() }) : null;
@@ -88,20 +93,52 @@ if (upload) {
 router.post(
   "/translate-text",
   authenticateUser,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { text, sourceLang, targetLang } = req.body || {};
     if (!text || !sourceLang) {
       throw new ValidationError("'text' and 'sourceLang' are required");
     }
+
+    // Look up user's organization via email
+    const userEmail = req.user?.email;
+    if (!userEmail) {
+      throw new ValidationError("Authenticated user email not found");
+    }
+    const dbUser = await userService.findUserByEmail(userEmail);
+    if (!dbUser || !dbUser.organizationId) {
+      throw new ValidationError("User is not associated with any organization");
+    }
+
+    // Compute required credits and ensure sufficient balance
+    const textLength = String(text).length;
+    const requiredCredits = creditService.computeRequiredCreditsForTranslation(textLength);
+    await creditService.ensureSufficientCredits(dbUser.organizationId, requiredCredits);
+
+    // Perform translation
     const result = await documentService.translateText({
       text,
       sourceLang,
       targetLang: targetLang || "en",
     });
+
+    // Deduct and record usage after successful translation
+    const remainingCredits = await creditService.deductAndRecord({
+      organizationId: dbUser.organizationId,
+      creditsUsed: requiredCredits,
+      operation: "translation",
+      metadata: {
+        textLength,
+        sourceLang,
+        targetLang: targetLang || "en",
+      },
+    });
+
     sendResponse(res, 200, true, "Text translated successfully", {
       translation: result.translation,
       sourceLang,
       targetLang: targetLang || "en",
+      creditsUsed: requiredCredits,
+      remainingCredits,
     });
   })
 );
@@ -109,7 +146,7 @@ router.post(
 // POST /api/ocr/extract-and-translate
 // Accepts same inputs as /extract plus sourceLang, optional targetLang (defaults to 'en')
 const extractAndTranslateHandler = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response) => {
     let buffer: Buffer | null = null;
     let fileName: string | undefined;
     let mimeType: string | undefined;
@@ -170,23 +207,56 @@ const extractAndTranslateHandler = asyncHandler(
       forceOcr = ["1", "true", "yes", "on"].includes(q.toLowerCase());
     }
 
-    const result = await documentService.extractAndTranslate({
-      buffer: buffer as Buffer,
-      fileName,
-      mimeType,
-      sourceLang,
+    // Authenticate + get org
+    const userEmail = req.user?.email;
+    if (!userEmail) {
+      throw new ValidationError("Authenticated user email not found");
+    }
+    const dbUser = await userService.findUserByEmail(userEmail);
+    if (!dbUser || !dbUser.organizationId) {
+      throw new ValidationError("User is not associated with any organization");
+    }
+
+    // Extract first (free), then check credits for translation
+    const extracted = await documentService.extractText(buffer as Buffer, mimeType, fileName, { forceOcr });
+    const textLength = String(extracted.text || "").length;
+    const requiredCredits = creditService.computeRequiredCreditsForTranslation(textLength);
+    await creditService.ensureSufficientCredits(dbUser.organizationId, requiredCredits);
+
+    // Translate
+    const translated = await documentService.translateText({
+      text: extracted.text,
+      sourceLang: sourceLang!,
       targetLang: targetLang || "en",
-      forceOcr,
+    });
+
+    // Deduct and record usage
+    const remainingCredits = await creditService.deductAndRecord({
+      organizationId: dbUser.organizationId,
+      creditsUsed: requiredCredits,
+      operation: "extract_and_translate",
+      metadata: {
+        textLength,
+        sourceLang,
+        targetLang: targetLang || "en",
+        fileName,
+        mimeType,
+        forceOcr,
+        extractedType: extracted.type,
+        pages: extracted.pages,
+      },
     });
 
     sendResponse(res, 200, true, "Document translated successfully", {
-      translation: result.translation,
-      meta: result.meta,
+      translation: translated.translation,
+      meta: extracted,
       fileName,
       mimeType,
       sourceLang,
       targetLang: targetLang || "en",
       forceOcr,
+      creditsUsed: requiredCredits,
+      remainingCredits,
     });
   }
 );

@@ -15,6 +15,8 @@ export interface TranslateResponseData {
   translation: string
   sourceLang: string
   targetLang: string
+  creditsUsed?: number
+  remainingCredits?: number
 }
 
 async function fileToBase64(file: File): Promise<string> {

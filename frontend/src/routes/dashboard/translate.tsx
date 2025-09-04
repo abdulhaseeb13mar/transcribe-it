@@ -1,10 +1,12 @@
-import { useState, type ChangeEvent, useRef } from 'react'
+import { useState, type ChangeEvent, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { store } from '../../store'
 import { UserRole } from '../../types/enums'
 import { documentService } from '../../services/documentService'
+import { creditService } from '../../services/creditService'
+import { useSelector } from '../../store'
 import { Button } from '../../components/ui/button'
 import {
   Card,
@@ -53,6 +55,9 @@ function TranslatePage() {
   const [file, setFile] = useState<File | null>(null)
   const [sourceLang, setSourceLang] = useState('ru')
   const [translation, setTranslation] = useState('')
+  const [credits, setCredits] = useState<number | null>(null)
+  const [lastUsed, setLastUsed] = useState<number | null>(null)
+  const token = useSelector((s) => s.auth.session?.token)
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const viewerRef = useRef<HTMLDivElement>(null)
@@ -61,6 +66,19 @@ function TranslatePage() {
     const f = e.target.files?.[0] || null
     setFile(f)
   }
+
+  // Fetch current credits on mount
+  useEffect(() => {
+    if (!token) return
+    ;(async () => {
+      try {
+        const res = await creditService.getMyCredits()
+        if (res.success && res.data) setCredits(res.data.credits)
+      } catch (e) {
+        // Ignore transient auth errors on first render
+      }
+    })()
+  }, [token])
 
   const handleTranslate = async () => {
     if (!file) {
@@ -89,6 +107,13 @@ function TranslatePage() {
       })
       if (translateRes.success && translateRes.data) {
         setTranslation(translateRes.data.translation)
+        if (typeof translateRes.data.remainingCredits === 'number') {
+          setCredits(translateRes.data.remainingCredits)
+        }
+        if (typeof translateRes.data.creditsUsed === 'number') {
+          setLastUsed(translateRes.data.creditsUsed)
+          setTimeout(() => setLastUsed(null), 4000)
+        }
       } else {
         throw new Error(translateRes.message || 'Translation failed')
       }
@@ -165,7 +190,21 @@ function TranslatePage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[340px,1fr]">
           <Card className="self-start">
             <CardHeader>
-              <CardTitle>Upload & Translate</CardTitle>
+              <div className="flex items-center justify-between gap-4">
+                <CardTitle>Upload & Translate</CardTitle>
+                <div className="text-sm text-slate-600 dark:text-slate-300">
+                  {credits !== null ? (
+                    <span>
+                      Credits: <span className="font-semibold">{credits}</span>
+                      {lastUsed ? (
+                        <span className="ml-2 text-xs text-slate-500">(-{lastUsed} used)</span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span className="animate-pulse">Fetching credits…</span>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center">
