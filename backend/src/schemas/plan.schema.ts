@@ -38,37 +38,39 @@ export const planQuerySchema = z.object({
     .string()
     .optional()
     .transform((val) => val === "true")
-    .pipe(z.boolean()),
+    .pipe(z.boolean())
+    .optional(),
   page: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
+    .default("1")
+    .transform((val) => parseInt(val, 10))
     .refine((val) => val > 0, "Page must be a positive number"),
   limit: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 10))
+    .default("10")
+    .transform((val) => parseInt(val, 10))
     .refine((val) => val > 0 && val <= 100, "Limit must be between 1 and 100"),
   sort: z
     .string()
     .optional()
+    .default("asc")
     .refine(
-      (val) => !val || ["asc", "desc"].includes(val),
+      (val) => ["asc", "desc"].includes(val),
       "Sort must be 'asc' or 'desc'"
-    )
-    .default("asc"),
+    ),
   sortBy: z
     .string()
     .optional()
+    .default("createdAt")
     .refine(
       (val) =>
-        !val ||
         ["name", "type", "credits", "price", "createdAt", "updatedAt"].includes(
           val
         ),
       "Invalid sort field"
-    )
-    .default("createdAt"),
+    ),
 });
 
 // Type exports

@@ -76,6 +76,11 @@ function AdminDashboardLayout() {
               </Button>
             )}
           </Link>
+          <Link to="/admin/dashboard/plans">
+            {({ isActive }) => (
+              <Button variant={isActive ? 'default' : 'ghost'}>Plans</Button>
+            )}
+          </Link>
           {/* <Link to="/admin/dashboard/users">
             {({ isActive }) => (
               <Button variant={isActive ? 'default' : 'ghost'}>Users</Button>

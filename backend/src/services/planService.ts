@@ -16,7 +16,12 @@ export class PlanService {
     pagination: PaginationInfo;
   }> {
     try {
-      const { type, isActive, page, limit, sort, sortBy } = params;
+      // Set default values for pagination parameters
+      const page = params.page ?? 1;
+      const limit = params.limit ?? 10;
+      const sort = params.sort ?? "asc";
+      const sortBy = params.sortBy ?? "createdAt";
+      const { type, isActive } = params;
 
       // Build where clause
       const where: Prisma.PlanWhereInput = {};
@@ -39,7 +44,6 @@ export class PlanService {
 
       // Get total count for pagination
       const total = await prisma.plan.count({ where });
-
       // Get plans with pagination
       const plans = await prisma.plan.findMany({
         where,

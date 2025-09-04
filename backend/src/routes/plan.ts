@@ -91,13 +91,6 @@ router.post(
   authenticateUser,
   validateBody(createPlanSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    // Check if user is super admin
-    if (req.user?.role !== "SUPER_ADMIN") {
-      throw new ValidationError(
-        "Insufficient permissions. Super admin access required."
-      );
-    }
-
     const planData = req.body as CreatePlanInput;
 
     // Check if plan name already exists
