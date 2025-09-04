@@ -39,6 +39,9 @@ function AdminDashboardLayout() {
 
   const handleLogout = () => {
     dispatch(logoutUser())
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
   }
 
   return (
