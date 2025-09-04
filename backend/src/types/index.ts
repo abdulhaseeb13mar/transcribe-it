@@ -1,5 +1,4 @@
 import { User as PrismaUser } from "@prisma/client";
-import { z } from "zod";
 
 // Environment variables interface
 export interface EnvironmentVariables {

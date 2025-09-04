@@ -98,6 +98,30 @@ backend/
 
 - `GET /health` - Server health status
 
+### OCR / Translation
+
+- `POST /api/ocr/extract` — Extract text from PDF, DOCX, or image.
+  - Request options:
+    - Multipart: `multipart/form-data` with a `file` field (requires `multer`).
+    - JSON: `application/json` with `{ "contentBase64": string, "fileName?": string, "mimeType?": string }`.
+  - Query/body options: `forceOcr` (boolean)
+  - Response: `{ type, text, pages?, warnings?, fileName, mimeType, forceOcr }`.
+
+- `POST /api/document/translate-text` — Translate provided text to English, returning Markdown that preserves layout/structure.
+  - JSON body: `{ text: string, sourceLang: string, targetLang?: string }` (defaults to English).
+  - Response: `{ translation, sourceLang, targetLang }`.
+
+- `POST /api/document/extract-and-translate` — Perform OCR then translate to English in one step. Returns Markdown that mirrors the original document's structure (headings, lists, tables where possible).
+  - Multipart: `file` plus fields `sourceLang`, optional `targetLang`, `forceOcr`.
+  - JSON: `{ contentBase64, fileName?, mimeType?, sourceLang, targetLang?, forceOcr? }`.
+  - Response: `{ translation, meta: { type, text, pages?, warnings? }, fileName, mimeType, sourceLang, targetLang, forceOcr }`.
+
+Notes:
+
+- PDF extraction tries text layer first; if very short (< 50 chars) or `forceOcr=true`, falls back to Gemini OCR when configured.
+- DOCX extraction uses raw text conversion.
+- Image extraction uses Gemini OCR when configured, otherwise Tesseract (English by default).
+
 ### Authentication
 
 - `POST /api/auth/register` - User registration
@@ -118,6 +142,35 @@ The API uses JWT (JSON Web Tokens) for authentication. Include the token in the 
 ```
 Authorization: Bearer <your-jwt-token>
 ```
+
+Gemini configuration (required for translation):
+
+- Set one of: `GOOGLE_API_KEY`, `GENAI_API_KEY`, or `API_KEY`.
+- Optional: `GENAI_MODEL` (default `gemini-2.5-flash`).
+
+## OCR Dependencies
+
+Install required packages in `backend` to enable extraction:
+
+```
+pnpm add multer pdf-parse mammoth tesseract.js @google/genai
+pnpm add -D @types/multer
+```
+
+or with npm:
+
+```
+npm install multer pdf-parse mammoth tesseract.js @google/genai
+npm install -D @types/multer
+```
+
+Tesseract language: defaults to `eng`. To use other languages, install the language data per tesseract.js docs.
+
+Gemini OCR (optional):
+
+- Set one of: `GOOGLE_API_KEY`, `GENAI_API_KEY`, or `API_KEY`.
+- Optional: `GENAI_MODEL` (default `gemini-2.5-flash`).
+- Behavior: For PDFs with little/no text (or `forceOcr=true`) and for images, the service uses Gemini OCR. If Gemini rejects a PDF (`INVALID_ARGUMENT`), it retries by treating content as an image.
 
 ## Error Handling
 

@@ -2,6 +2,7 @@ import { Router, IRouter } from "express";
 import userRoutes from "./users";
 import authRoutes from "./auth";
 import adminRoutes from "./admin";
+import documentRoutes from "./documents";
 
 const router: IRouter = Router();
 
@@ -9,6 +10,7 @@ const router: IRouter = Router();
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/admin", adminRoutes);
+router.use("/document", documentRoutes);
 
 // API Info endpoint
 router.get("/", (req, res) => {
@@ -20,6 +22,7 @@ router.get("/", (req, res) => {
       auth: "/api/auth",
       users: "/api/users",
       admin: "/api/admin",
+      document: "/document/ocr",
     },
   });
 });
