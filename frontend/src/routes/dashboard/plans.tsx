@@ -55,7 +55,7 @@ function PlansPage() {
       if (!res.success) throw new Error(res.message || 'Subscription failed')
       // refresh state
       const [plansRes, creditsRes] = await Promise.all([
-        plansService.getPlans(),
+        plansService.getOrgPlans(),
         creditService.getMyCredits(),
       ])
       if (plansRes.success && plansRes.data) setData(plansRes.data)

@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient'
-import type { Plan } from './plansService2'
+import type { Plan } from './plansService'
 
 export interface Organization {
   id: string
