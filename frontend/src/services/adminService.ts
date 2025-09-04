@@ -31,6 +31,15 @@ interface OrganizationResponse {
   organization: Organization
 }
 
+interface SummaryResponse {
+  organizationsCount: number
+  usersCount: number
+  summary: {
+    totalOrganizations: number
+    totalUsers: number
+  }
+}
+
 export class AdminService {
   /**
    * Get all organizations
@@ -64,6 +73,23 @@ export class AdminService {
       return response.data.organization
     } catch (error) {
       console.error('Failed to create organization:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get summary statistics (organizations and users count)
+   */
+  static async getSummary(): Promise<SummaryResponse> {
+    try {
+      const response =
+        await apiClient.get<SummaryResponse>('/admin/get-summary')
+      if (!response.data) {
+        throw new Error('Failed to fetch summary data')
+      }
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch summary:', error)
       throw error
     }
   }

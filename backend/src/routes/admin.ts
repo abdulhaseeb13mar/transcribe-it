@@ -91,7 +91,7 @@ router.get(
 );
 
 // GET /api/admin/get-organizations
-// Fetches all organizations - requires admin authentication
+// Fetches all organizations
 router.get(
   "/get-organizations",
   authenticateUser,
@@ -101,6 +101,28 @@ router.get(
     sendResponse(res, 200, true, "Organizations retrieved successfully", {
       organizations,
       count: organizations.length,
+    });
+  })
+);
+
+// GET /api/admin/get-summary
+// Gets summary counts of organizations and users
+router.get(
+  "/get-summary",
+  authenticateUser,
+  asyncHandler(async (req: Request, res: Response) => {
+    const [organizationsCount, usersCount] = await Promise.all([
+      organizationService.getOrganizationsCount(),
+      userService.getUsersCount(),
+    ]);
+
+    sendResponse(res, 200, true, "Summary retrieved successfully", {
+      organizationsCount,
+      usersCount,
+      summary: {
+        totalOrganizations: organizationsCount,
+        totalUsers: usersCount,
+      },
     });
   })
 );

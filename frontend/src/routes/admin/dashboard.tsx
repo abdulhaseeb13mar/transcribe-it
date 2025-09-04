@@ -61,7 +61,7 @@ function AdminDashboardLayout() {
 
         {/* Navigation Tabs */}
         <div className="flex space-x-1 mb-8">
-          <Link to="/admin/dashboard">
+          <Link to="/admin/dashboard" activeOptions={{ exact: true }}>
             {({ isActive }) => (
               <Button variant={isActive ? 'default' : 'ghost'}>Overview</Button>
             )}
@@ -73,11 +73,11 @@ function AdminDashboardLayout() {
               </Button>
             )}
           </Link>
-          <Link to="/admin/dashboard/users">
+          {/* <Link to="/admin/dashboard/users">
             {({ isActive }) => (
               <Button variant={isActive ? 'default' : 'ghost'}>Users</Button>
             )}
-          </Link>
+          </Link> */}
         </div>
 
         {/* Content */}

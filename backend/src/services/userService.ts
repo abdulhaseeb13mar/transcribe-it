@@ -139,4 +139,13 @@ export class UserService {
       );
     }
   }
+
+  async getUsersCount(): Promise<number> {
+    try {
+      const count = await prisma.user.count();
+      return count;
+    } catch (error: any) {
+      throw new Error(`Failed to get users count: ${error.message}`);
+    }
+  }
 }

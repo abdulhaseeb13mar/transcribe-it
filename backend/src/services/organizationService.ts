@@ -118,4 +118,13 @@ export class OrganizationService {
       throw new Error(`Failed to get organizations: ${error.message}`);
     }
   }
+
+  async getOrganizationsCount(): Promise<number> {
+    try {
+      const count = await prisma.organization.count();
+      return count;
+    } catch (error: any) {
+      throw new Error(`Failed to get organizations count: ${error.message}`);
+    }
+  }
 }
