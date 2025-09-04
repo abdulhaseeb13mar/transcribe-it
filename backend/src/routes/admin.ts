@@ -1,9 +1,11 @@
 import { Router, Request, Response, IRouter } from "express";
 import { asyncHandler, sendResponse } from "../utils/helpers";
 import { UserService } from "../services/userService";
+import { OrganizationService } from "../services/organizationService";
 import { ValidationError } from "../utils/errors";
 import { supabaseAdmin } from "../config/supabase"; // Updated to use admin client
 import { validateBody } from "../middleware/validation";
+import { authenticate } from "../middleware/auth";
 import {
   createSuperAdminSchema,
   CreateSuperAdminInput,
@@ -11,6 +13,7 @@ import {
 
 const router: IRouter = Router();
 const userService = new UserService();
+const organizationService = new OrganizationService();
 
 // POST /api/admin/super-admin
 // Creates the initial super admin - can only be called once
@@ -83,6 +86,21 @@ router.get(
       message: exists
         ? "Super admin already exists"
         : "No super admin found - one can be created",
+    });
+  })
+);
+
+// GET /api/admin/get-organizations
+// Fetches all organizations - requires admin authentication
+router.get(
+  "/get-organizations",
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const organizations = await organizationService.getAllOrganizations();
+
+    sendResponse(res, 200, true, "Organizations retrieved successfully", {
+      organizations,
+      count: organizations.length,
     });
   })
 );
