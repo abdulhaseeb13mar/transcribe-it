@@ -10,11 +10,11 @@ function SetupPage() {
 
   const handleSuccess = () => {
     // Setup successful, navigate to admin login
-    navigate({ to: '/admin' })
+    // navigate({ to: '/admin' })
   }
 
   const handleLoginClick = () => {
-    navigate({ to: '/admin' })
+    // navigate({ to: '/admin' })
   }
 
   return (

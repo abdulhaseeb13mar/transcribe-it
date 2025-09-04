@@ -10,11 +10,11 @@ function RegisterPage() {
 
   const handleSuccess = () => {
     // Registration successful, could navigate to a success page or login
-    navigate({ to: '/login' })
+    // navigate({ to: '/login', search: { redirect: '/dashboard' } })
   }
 
   const handleLoginClick = () => {
-    navigate({ to: '/login' })
+    // navigate({ to: '/login', search: { redirect: '/dashboard' } })
   }
 
   return (
