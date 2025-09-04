@@ -1,10 +1,18 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { store, useSelector } from '../../store'
-import { plansService, type PlansInfoResponse } from '../../services/plansService'
+import {
+  plansService,
+  type PlansInfoResponse,
+} from '../../services/plansService'
 import { creditService } from '../../services/creditService'
 import { UserRole } from '../../types/enums'
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 
 export const Route = createFileRoute('/dashboard/plans')({
@@ -12,7 +20,7 @@ export const Route = createFileRoute('/dashboard/plans')({
     const state = store.getState()
     const { isAuthenticated, user } = state.auth
     if (!isAuthenticated || !user || user.role !== UserRole.ADMIN) {
-      throw redirect({ to: '/login', search: { redirect: undefined } })
+      throw redirect({ to: '/', search: { redirect: undefined } })
     }
   },
   component: PlansPage,
@@ -36,7 +44,8 @@ function PlansPage() {
           creditService.getMyCredits(),
         ])
         if (plansRes.success && plansRes.data) setData(plansRes.data)
-        if (creditsRes.success && creditsRes.data) setCredits(creditsRes.data.credits)
+        if (creditsRes.success && creditsRes.data)
+          setCredits(creditsRes.data.credits)
         setError(null)
       } catch (e: any) {
         setError(e?.message || 'Failed to load plans')
@@ -59,7 +68,8 @@ function PlansPage() {
         creditService.getMyCredits(),
       ])
       if (plansRes.success && plansRes.data) setData(plansRes.data)
-      if (creditsRes.success && creditsRes.data) setCredits(creditsRes.data.credits)
+      if (creditsRes.success && creditsRes.data)
+        setCredits(creditsRes.data.credits)
     } catch (e: any) {
       setError(e?.message || 'Subscription failed')
     } finally {
@@ -70,7 +80,10 @@ function PlansPage() {
   const formatPrice = (price: string | number) => {
     const n = Number(price)
     if (!Number.isFinite(n)) return String(price)
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n)
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: 'USD',
+    }).format(n)
   }
 
   const StatusBadge = ({ status }: { status?: string }) => {
@@ -84,7 +97,9 @@ function PlansPage() {
     }
     const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-200'
     return (
-      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>
+      <span
+        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
+      >
         {s.replace('_', ' ')}
       </span>
     )
@@ -94,10 +109,14 @@ function PlansPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Plans</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Plans
+          </h1>
         </div>
         {error && (
-          <div className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</div>
+          <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+            {error}
+          </div>
         )}
         <div className="grid gap-6 md:grid-cols-[320px,1fr]">
           <Card className="self-start">
@@ -110,10 +129,14 @@ function PlansPage() {
                 <div className="text-3xl font-semibold">{credits ?? '—'}</div>
                 <div className="mt-4">
                   <div className="text-sm">Plan</div>
-                  <div className="text-lg font-medium">{data?.currentSubscription?.plan?.name || 'None'}</div>
+                  <div className="text-lg font-medium">
+                    {data?.currentSubscription?.plan?.name || 'None'}
+                  </div>
                 </div>
                 <div className="mt-3">
-                  <StatusBadge status={data?.currentSubscription?.status || undefined} />
+                  <StatusBadge
+                    status={data?.currentSubscription?.status || undefined}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -131,20 +154,33 @@ function PlansPage() {
                   {data.plans.map((p) => {
                     const isCurrent = p.id === currentPlanId
                     return (
-                      <div key={p.id} className="rounded-lg border p-5 bg-white/70 dark:bg-slate-900/50">
+                      <div
+                        key={p.id}
+                        className="rounded-lg border p-5 bg-white/70 dark:bg-slate-900/50"
+                      >
                         <div className="flex items-center justify-between">
                           <div className="text-lg font-semibold">{p.name}</div>
                           {isCurrent && <StatusBadge status="ACTIVE" />}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{p.description || '—'}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {p.description || '—'}
+                        </div>
                         <div className="mt-3 flex items-center gap-4">
                           <div>
-                            <div className="text-xs uppercase tracking-wide text-gray-500">Credits</div>
-                            <div className="text-xl font-medium">{p.credits}</div>
+                            <div className="text-xs uppercase tracking-wide text-gray-500">
+                              Credits
+                            </div>
+                            <div className="text-xl font-medium">
+                              {p.credits}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-xs uppercase tracking-wide text-gray-500">Price</div>
-                            <div className="text-xl font-medium">{formatPrice(p.price)}</div>
+                            <div className="text-xs uppercase tracking-wide text-gray-500">
+                              Price
+                            </div>
+                            <div className="text-xl font-medium">
+                              {formatPrice(p.price)}
+                            </div>
                           </div>
                         </div>
                         <div className="mt-4">
@@ -154,7 +190,11 @@ function PlansPage() {
                             variant={isCurrent ? 'outline' : 'default'}
                             className="w-full"
                           >
-                            {isCurrent ? 'Current Plan' : (subscribing === p.id ? 'Subscribing…' : 'Subscribe')}
+                            {isCurrent
+                              ? 'Current Plan'
+                              : subscribing === p.id
+                                ? 'Subscribing…'
+                                : 'Subscribe'}
                           </Button>
                         </div>
                       </div>
