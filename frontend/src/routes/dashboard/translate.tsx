@@ -30,7 +30,7 @@ export const Route = createFileRoute('/dashboard/translate')({
 
     if (!isAuthenticated || !user) {
       throw redirect({
-        to: '/login',
+        to: '/',
         search: {
           redirect: undefined,
         },
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/dashboard/translate')({
 
     if (user.role !== UserRole.ADMIN) {
       throw redirect({
-        to: '/login',
+        to: '/',
         search: {
           redirect: undefined,
         },
