@@ -3,7 +3,7 @@ import { store } from '../store'
 import { UserRole } from '../types/enums'
 
 export const Route = createFileRoute('/dashboard')({
-  beforeLoad: ({ location }) => {
+  beforeLoad: () => {
     const state = store.getState()
     const { isAuthenticated, user } = state.auth
 
