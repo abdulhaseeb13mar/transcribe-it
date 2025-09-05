@@ -17,6 +17,19 @@ export class PaymentService {
       : null;
   }
 
+  async getPaymentsByOrganization(organizationId: string) {
+    if (!organizationId) throw new Error("organizationId is required");
+    return prisma.payment.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        plan: {
+          select: { id: true, name: true, credits: true, price: true },
+        },
+      },
+    });
+  }
+
   async createCheckoutSession(params: {
     organizationId: string;
     planId: string;
