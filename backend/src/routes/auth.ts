@@ -88,8 +88,14 @@ router.post(
 // POST /api/auth/register-org
 router.post(
   "/register-org",
+  authenticateUser,
   validateBody(registerOrgSchema),
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError(
+        "Insufficient permissions. Super admin access required."
+      );
+    }
     const { email, password, name, orgName } = (req as any)
       .validatedBody as RegisterOrgInput;
 
