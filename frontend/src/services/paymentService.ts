@@ -61,6 +61,21 @@ class PaymentService {
     const url = `/admin/get-payments${qs.toString() ? `?${qs.toString()}` : ''}`
     return apiClient.get<AdminPaymentsListResponse>(url)
   }
+
+  // Org: fetch payments for a specific organization with pagination
+  async getPaymentsByOrganization(
+    organizationId: string,
+    params?: Partial<{ page: number; pageSize: number; limit: number }>,
+  ) {
+    const qs = new URLSearchParams()
+    if (params) {
+      if (params.page != null) qs.set('page', String(params.page))
+      const limit = params.limit ?? params.pageSize
+      if (limit != null) qs.set('limit', String(limit))
+    }
+    const url = `/payments/organization/${encodeURIComponent(organizationId)}${qs.toString() ? `?${qs.toString()}` : ''}`
+    return apiClient.get<AdminPaymentsListResponse>(url)
+  }
 }
 
 export const paymentService = new PaymentService()
