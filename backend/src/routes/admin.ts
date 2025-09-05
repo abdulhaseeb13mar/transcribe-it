@@ -157,10 +157,17 @@ router.get(
         "Insufficient permissions. Super admin access required."
       );
     }
-    const payments = await paymentService.getAllPayments();
+    const page = Number((req.query.page as string) ?? 1) || 1;
+    const pageSize =
+      Number((req.query.limit as string) ?? req.query.pageSize ?? 20) || 20;
+    const result = await paymentService.getAllPayments({ page, pageSize });
     sendResponse(res, 200, true, "Payments retrieved successfully", {
-      payments,
-      count: payments.length,
+      payments: result.items,
+      count: result.items.length,
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      totalPages: result.totalPages,
     });
   })
 );
