@@ -145,7 +145,7 @@ export function PlansDashboard({
     }).format(price)
   }
 
-  const getPlanTypeDisplayName = (type: PlanType): string => {
+  const getPlanTypeDisplayName = (type: PlanType | string): string => {
     switch (type) {
       case PlanType.BASIC:
         return 'Basic'
@@ -325,7 +325,7 @@ export function PlansDashboard({
                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}
                       >
-                        {getPlanTypeDisplayName(plan.type)}
+                        {getPlanTypeDisplayName(plan.type as PlanType | string)}
                       </span>
                     </TableCell>
                     <TableCell>{plan.credits.toLocaleString()}</TableCell>
