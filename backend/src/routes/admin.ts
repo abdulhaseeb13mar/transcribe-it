@@ -9,7 +9,11 @@ import {
   createSuperAdminSchema,
   CreateSuperAdminInput,
 } from "../schemas/admin.schema";
-import { authenticateUser } from "../middleware/supabaseAuth";
+import {
+  authenticateUser,
+  AuthenticatedRequest,
+} from "../middleware/supabaseAuth";
+import { paymentService } from "../services/paymentService";
 
 const router: IRouter = Router();
 const userService = new UserService();
@@ -78,7 +82,12 @@ router.post(
 // Checks if a super admin already exists
 router.get(
   "/super-admin/check",
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError(
+        "Insufficient permissions. Super admin access required."
+      );
+    }
     const exists = await userService.checkSuperAdminExists();
 
     sendResponse(res, 200, true, "Super admin existence check completed", {
@@ -95,7 +104,12 @@ router.get(
 router.get(
   "/get-organizations",
   authenticateUser,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError(
+        "Insufficient permissions. Super admin access required."
+      );
+    }
     const organizations = await organizationService.getAllOrganizations();
 
     sendResponse(res, 200, true, "Organizations retrieved successfully", {
@@ -110,7 +124,12 @@ router.get(
 router.get(
   "/get-summary",
   authenticateUser,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError(
+        "Insufficient permissions. Super admin access required."
+      );
+    }
     const [organizationsCount, usersCount] = await Promise.all([
       organizationService.getOrganizationsCount(),
       userService.getUsersCount(),
