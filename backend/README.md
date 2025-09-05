@@ -101,6 +101,7 @@ backend/
 ### OCR / Translation
 
 - `POST /api/ocr/extract` — Extract text from PDF, DOCX, or image.
+
   - Request options:
     - Multipart: `multipart/form-data` with a `file` field (requires `multer`).
     - JSON: `application/json` with `{ "contentBase64": string, "fileName?": string, "mimeType?": string }`.
@@ -108,6 +109,7 @@ backend/
   - Response: `{ type, text, pages?, warnings?, fileName, mimeType, forceOcr }`.
 
 - `POST /api/document/translate-text` — Translate provided text to English, returning Markdown that preserves layout/structure.
+
   - JSON body: `{ text: string, sourceLang: string, targetLang?: string }` (defaults to English).
   - Response: `{ translation, sourceLang, targetLang }`.
 
@@ -263,3 +265,91 @@ All environment variables should be documented in `.env.example` and have sensib
 ## License
 
 MIT License - see LICENSE file for details.
+
+## Stripe Payments (One-off Credit Purchases)
+
+This backend supports one-off (non-recurring) credit purchases using Stripe Checkout. A payment adds plan credits to the organization's balance once completed.
+
+### Purchase Flow
+
+1. Admin selects a plan in the dashboard.
+2. Frontend calls `POST /api/payments/checkout` with `planId`.
+3. Backend creates a `Payment` row (status `pending`) and a Stripe Checkout Session.
+4. User is redirected to Stripe-hosted checkout.
+5. Stripe sends `checkout.session.completed` webhook.
+6. Backend webhook handler marks the payment `succeeded`, increments credits, logs a `creditUsage` entry, and upserts `billing` (status ACTIVE).
+
+### Data Model Additions
+
+`Payment` table fields:
+
+- `id` UUID
+- `organizationId`
+- `planId`
+- `amount` (integer, cents)
+- `currency` (default `usd`)
+- `status` (`pending|succeeded|failed|expired|canceled`)
+- Stripe identifiers: `stripeCheckoutSessionId`, `stripePaymentIntentId`
+
+### Local Test Setup
+
+1. Add to `.env`:
+
+```env
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...   # after starting stripe listen
+FRONTEND_SUCCESS_URL=http://localhost:3000/dashboard/plans?status=success
+FRONTEND_CANCEL_URL=http://localhost:3000/dashboard/plans?status=cancelled
+```
+
+2. Run migrations (if not already):
+
+```bash
+pnpm exec prisma migrate dev --name add_payment_model
+```
+
+3. Start servers.
+4. In another terminal start Stripe CLI forwarding:
+
+```bash
+stripe login
+stripe listen --forward-to localhost:8000/api/payments/webhook
+```
+
+Copy the printed webhook secret into `.env` and restart backend.
+
+### Webhook Verification Note
+
+For production you must ensure the webhook route receives the raw request body. Adjust `index.ts` to register a raw body parser for `/api/payments/webhook` BEFORE `express.json()`, e.g.:
+
+```ts
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  paymentsWebhookHandler
+);
+```
+
+Then keep normal `app.use(express.json())` for other routes. (The current dev shortcut may not verify signatures if JSON parsing alters the payload.)
+
+### Production Go-Live Checklist
+
+1. Replace test keys with live keys (`sk_live_`, `pk_live_`).
+2. Create production webhook endpoint in Stripe dashboard; copy live `STRIPE_WEBHOOK_SECRET`.
+3. Set accurate `FRONTEND_SUCCESS_URL` / `FRONTEND_CANCEL_URL` to your domain (HTTPS).
+4. Enforce HTTPS, strong CORS, and proper logging (PII free) around payments.
+5. Monitor Stripe Dashboard + enable email alerts (failed payments, disputes).
+6. Reconcile daily: compare count and total of succeeded `Payment` rows vs Stripe balance transactions.
+7. (Optional) Add retry logic / idempotency keys if you introduce direct PaymentIntents.
+8. (Optional) Add products/prices in Stripe & reference them instead of dynamic `price_data` for analytics.
+
+### Extending
+
+- Arbitrary credit top-up: accept `credits` param, compute `amount = credits * unitPrice`, create Checkout Session with dynamic line item, record in `Payment` metadata.
+- Display purchase history: create `GET /api/payments/history` returning joined `Payment` + `Plan` data.
+- Refunds: add endpoint calling `stripe.refunds.create({ payment_intent })` then decrement organization credits (ensure not below zero) & log reversal usage.
+
+### Test Card Numbers
+
+Use Stripe test card `4242 4242 4242 4242` (any future expiry, any CVC, any ZIP). See Stripe docs for 3DS, insufficient funds, and dispute simulation cards.
