@@ -17,6 +17,19 @@ export class PaymentService {
       : null;
   }
 
+  /**
+   * Fetch all payments across all organizations (SUPER_ADMIN only).
+   */
+  async getAllPayments() {
+    return prisma.payment.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        plan: { select: { id: true, name: true, credits: true, price: true } },
+        organization: { select: { id: true, name: true } },
+      },
+    });
+  }
+
   async getPaymentsByOrganization(organizationId: string) {
     if (!organizationId) throw new Error("organizationId is required");
     return prisma.payment.findMany({
