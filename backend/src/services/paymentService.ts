@@ -41,16 +41,8 @@ export class PaymentService {
       },
     });
 
-    const successUrl =
-      process.env.FRONTEND_SUCCESS_URL ||
-      `${
-        params.baseUrl || "http://localhost:3000"
-      }/dashboard/plans?status=success`;
-    const cancelUrl =
-      process.env.FRONTEND_CANCEL_URL ||
-      `${
-        params.baseUrl || "http://localhost:3000"
-      }/dashboard/plans?status=cancelled`;
+    const successUrl = `${params.baseUrl}${process.env.FRONTEND_SUCCESS_URL}`;
+    const cancelUrl = `${params.baseUrl}${process.env.FRONTEND_CANCEL_URL}`;
 
     const session = await this.stripe.checkout.sessions.create({
       mode: "payment",
