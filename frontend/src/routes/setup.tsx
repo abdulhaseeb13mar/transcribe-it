@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { SuperAdminSetup } from '../components/auth/SuperAdminSetup'
 
 export const Route = createFileRoute('/setup')({
@@ -6,7 +6,7 @@ export const Route = createFileRoute('/setup')({
 })
 
 function SetupPage() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   const handleSuccess = () => {
     // Setup successful, navigate to admin login
