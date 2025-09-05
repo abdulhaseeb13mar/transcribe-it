@@ -83,11 +83,6 @@ router.post(
 router.get(
   "/super-admin/check",
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    if (req.user?.role !== "SUPER_ADMIN") {
-      throw new ValidationError(
-        "Insufficient permissions. Super admin access required."
-      );
-    }
     const exists = await userService.checkSuperAdminExists();
 
     sendResponse(res, 200, true, "Super admin existence check completed", {
