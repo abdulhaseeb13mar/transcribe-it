@@ -82,31 +82,31 @@ function PlansPage() {
     }).format(n)
   }
 
-  const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status) return null
-    const s = status.toUpperCase()
-    const map: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800 border-green-200',
-      PAST_DUE: 'bg-amber-100 text-amber-800 border-amber-200',
-      INACTIVE: 'bg-slate-100 text-slate-800 border-slate-200',
-      CANCELLED: 'bg-red-100 text-red-800 border-red-200',
-    }
-    const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-200'
-    return (
-      <span
-        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
-      >
-        {s.replace('_', ' ')}
-      </span>
-    )
-  }
+  // const StatusBadge = ({ status }: { status?: string }) => {
+  //   if (!status) return null
+  //   const s = status.toUpperCase()
+  //   const map: Record<string, string> = {
+  //     ACTIVE: 'bg-green-100 text-green-800 border-green-200',
+  //     PAST_DUE: 'bg-amber-100 text-amber-800 border-amber-200',
+  //     INACTIVE: 'bg-slate-100 text-slate-800 border-slate-200',
+  //     CANCELLED: 'bg-red-100 text-red-800 border-red-200',
+  //   }
+  //   const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-200'
+  //   return (
+  //     <span
+  //       className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
+  //     >
+  //       {s.replace('_', ' ')}
+  //     </span>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Plans
+            Buy Credits
           </h1>
         </div>
         {error && (
@@ -116,35 +116,28 @@ function PlansPage() {
         )}
         <div className="grid gap-6 md:grid-cols-[320px,1fr]">
           <Card className="self-start">
-            <CardHeader>
-              <CardTitle>Current</CardTitle>
-            </CardHeader>
             <CardContent>
               <div className="text-gray-700 dark:text-gray-300">
-                <div className="text-sm">Credits</div>
+                <div className="text-sm">Remaining Credits</div>
                 <div className="text-3xl font-semibold">{credits ?? '—'}</div>
                 <div className="mt-4">
-                  <div className="text-sm">Plan</div>
+                  <div className="text-sm">Last Bought</div>
                   <div className="text-lg font-medium">
                     {data?.currentSubscription?.plan?.name || 'None'}
                   </div>
                 </div>
-                <div className="mt-3">
-                  <StatusBadge
-                    status={data?.currentSubscription?.status || undefined}
-                  />
-                </div>
+                {/* No status badge needed */}
               </div>
             </CardContent>
           </Card>
 
           <Card className="self-start">
             <CardHeader>
-              <CardTitle>Available Plans</CardTitle>
+              <CardTitle>Available Credit Tiers</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-sm text-gray-500">Loading plans…</div>
+                <div className="text-sm text-gray-500">Loading credit tiers…</div>
               ) : data?.plans && data.plans.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   {data.plans.map((p) => {
@@ -156,10 +149,14 @@ function PlansPage() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="text-lg font-semibold">{p.name}</div>
-                          {isCurrent && <StatusBadge status="ACTIVE" />}
+                          {isCurrent && (
+                            <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-800 border-slate-200">
+                              LAST BOUGHT
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {p.description || '—'}
+                          {(p.description || '—').replace(/\b[Pp]lan\b/g, 'tier')}
                         </div>
                         <div className="mt-3 flex items-center gap-4">
                           <div>
@@ -181,29 +178,25 @@ function PlansPage() {
                         </div>
                         <div className="mt-4">
                           <Button
-                            disabled={isCurrent || subscribing === p.id}
+                            disabled={subscribing === p.id}
                             onClick={() => handleSubscribe(p.id)}
-                            variant={isCurrent ? 'outline' : 'default'}
+                            variant={'default'}
                             className="w-full"
                           >
-                            {isCurrent
-                              ? 'Current Plan'
-                              : subscribing === p.id
-                                ? 'Redirecting…'
-                                : 'Buy'}
+                            {subscribing === p.id ? 'Redirecting…' : 'Buy'}
                           </Button>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">No plans available.</div>
+                <div className="text-sm text-gray-500">No credit tiers available.</div>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

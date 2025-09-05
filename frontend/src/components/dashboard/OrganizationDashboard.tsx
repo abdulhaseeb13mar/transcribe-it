@@ -121,15 +121,15 @@ export function OrganizationDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Plans</CardTitle>
+              <CardTitle>Credits</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Plan management coming soon.
+                Buy more credits to keep your team productive.
               </p>
               <div className="mt-3">
                 <Button onClick={() => router.navigate({ to: '/dashboard/plans' })}>
-                  Manage Plans
+                  Manage Credits
                 </Button>
               </div>
             </CardContent>
