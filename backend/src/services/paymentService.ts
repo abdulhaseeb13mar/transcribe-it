@@ -18,29 +18,67 @@ export class PaymentService {
   }
 
   /**
-   * Fetch all payments across all organizations (SUPER_ADMIN only).
+   * Fetch all payments across all organizations (SUPER_ADMIN only) with pagination.
    */
-  async getAllPayments() {
-    return prisma.payment.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        plan: { select: { id: true, name: true, credits: true, price: true } },
-        organization: { select: { id: true, name: true } },
-      },
-    });
+  async getAllPayments(params?: { page?: number; pageSize?: number }) {
+    const page = Math.max(1, Number(params?.page ?? 1));
+    const pageSize = Math.min(100, Math.max(1, Number(params?.pageSize ?? 20)));
+
+    const [total, items] = await Promise.all([
+      prisma.payment.count(),
+      prisma.payment.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          plan: {
+            select: { id: true, name: true, credits: true, price: true },
+          },
+          organization: { select: { id: true, name: true } },
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    };
   }
 
-  async getPaymentsByOrganization(organizationId: string) {
+  async getPaymentsByOrganization(
+    organizationId: string,
+    params?: { page?: number; pageSize?: number }
+  ) {
     if (!organizationId) throw new Error("organizationId is required");
-    return prisma.payment.findMany({
-      where: { organizationId },
-      orderBy: { createdAt: "desc" },
-      include: {
-        plan: {
-          select: { id: true, name: true, credits: true, price: true },
+    const page = Math.max(1, Number(params?.page ?? 1));
+    const pageSize = Math.min(100, Math.max(1, Number(params?.pageSize ?? 20)));
+
+    const where = { organizationId } as const;
+    const [total, items] = await Promise.all([
+      prisma.payment.count({ where }),
+      prisma.payment.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        include: {
+          plan: {
+            select: { id: true, name: true, credits: true, price: true },
+          },
         },
-      },
-    });
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    };
   }
 
   async createCheckoutSession(params: {
