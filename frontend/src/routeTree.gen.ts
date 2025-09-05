@@ -17,6 +17,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DashboardTranslateRouteImport } from './routes/dashboard/translate'
 import { Route as DashboardPlansRouteImport } from './routes/dashboard/plans'
+import { Route as DashboardPaymentsRouteImport } from './routes/dashboard/payments'
 import { Route as DashboardPaymentSuccessRouteImport } from './routes/dashboard/payment-success'
 import { Route as DashboardPaymentCancelRouteImport } from './routes/dashboard/payment-cancel'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
@@ -64,6 +65,11 @@ const DashboardTranslateRoute = DashboardTranslateRouteImport.update({
 const DashboardPlansRoute = DashboardPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPaymentsRoute = DashboardPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardPaymentSuccessRoute = DashboardPaymentSuccessRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRouteWithChildren
   '/dashboard/payment-cancel': typeof DashboardPaymentCancelRoute
   '/dashboard/payment-success': typeof DashboardPaymentSuccessRoute
+  '/dashboard/payments': typeof DashboardPaymentsRoute
   '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin': typeof AdminIndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/dashboard/payment-cancel': typeof DashboardPaymentCancelRoute
   '/dashboard/payment-success': typeof DashboardPaymentSuccessRoute
+  '/dashboard/payments': typeof DashboardPaymentsRoute
   '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin': typeof AdminIndexRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRouteWithChildren
   '/dashboard/payment-cancel': typeof DashboardPaymentCancelRoute
   '/dashboard/payment-success': typeof DashboardPaymentSuccessRoute
+  '/dashboard/payments': typeof DashboardPaymentsRoute
   '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin/': typeof AdminIndexRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/dashboard/payment-cancel'
     | '/dashboard/payment-success'
+    | '/dashboard/payments'
     | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/dashboard/payment-cancel'
     | '/dashboard/payment-success'
+    | '/dashboard/payments'
     | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/dashboard/payment-cancel'
     | '/dashboard/payment-success'
+    | '/dashboard/payments'
     | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin/'
@@ -286,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPlansRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/payments': {
+      id: '/dashboard/payments'
+      path: '/payments'
+      fullPath: '/dashboard/payments'
+      preLoaderRoute: typeof DashboardPaymentsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/payment-success': {
       id: '/dashboard/payment-success'
       path: '/payment-success'
@@ -348,6 +367,7 @@ declare module '@tanstack/react-router' {
 interface DashboardRouteChildren {
   DashboardPaymentCancelRoute: typeof DashboardPaymentCancelRoute
   DashboardPaymentSuccessRoute: typeof DashboardPaymentSuccessRoute
+  DashboardPaymentsRoute: typeof DashboardPaymentsRoute
   DashboardPlansRoute: typeof DashboardPlansRoute
   DashboardTranslateRoute: typeof DashboardTranslateRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -356,6 +376,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardPaymentCancelRoute: DashboardPaymentCancelRoute,
   DashboardPaymentSuccessRoute: DashboardPaymentSuccessRoute,
+  DashboardPaymentsRoute: DashboardPaymentsRoute,
   DashboardPlansRoute: DashboardPlansRoute,
   DashboardTranslateRoute: DashboardTranslateRoute,
   DashboardIndexRoute: DashboardIndexRoute,
