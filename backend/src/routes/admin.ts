@@ -127,4 +127,23 @@ router.get(
   })
 );
 
+// GET /api/admin/get-payments
+// Fetch all payments (SUPER_ADMIN only)
+router.get(
+  "/get-payments",
+  authenticateUser,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.user?.role !== "SUPER_ADMIN") {
+      throw new ValidationError(
+        "Insufficient permissions. Super admin access required."
+      );
+    }
+    const payments = await paymentService.getAllPayments();
+    sendResponse(res, 200, true, "Payments retrieved successfully", {
+      payments,
+      count: payments.length,
+    });
+  })
+);
+
 export default router;
