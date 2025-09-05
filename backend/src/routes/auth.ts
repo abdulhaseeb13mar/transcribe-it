@@ -114,6 +114,7 @@ router.post(
       options: {
         data: {
           name: name,
+          role: "ADMIN",
         },
         // emailRedirectTo: "http://localhost:5173",
       },
