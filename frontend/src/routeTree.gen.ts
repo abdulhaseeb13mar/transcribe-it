@@ -23,6 +23,7 @@ import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
 import { Route as AdminDashboardUsersIndexRouteImport } from './routes/admin/dashboard/users/index'
 import { Route as AdminDashboardPlansIndexRouteImport } from './routes/admin/dashboard/plans/index'
+import { Route as AdminDashboardPaymentsIndexRouteImport } from './routes/admin/dashboard/payments/index'
 import { Route as AdminDashboardOrganizationsIndexRouteImport } from './routes/admin/dashboard/organizations/index'
 
 const SetupRoute = SetupRouteImport.update({
@@ -97,6 +98,12 @@ const AdminDashboardPlansIndexRoute =
     path: '/plans/',
     getParentRoute: () => AdminDashboardRoute,
   } as any)
+const AdminDashboardPaymentsIndexRoute =
+  AdminDashboardPaymentsIndexRouteImport.update({
+    id: '/payments/',
+    path: '/payments/',
+    getParentRoute: () => AdminDashboardRoute,
+  } as any)
 const AdminDashboardOrganizationsIndexRoute =
   AdminDashboardOrganizationsIndexRouteImport.update({
     id: '/organizations/',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/dashboard/organizations': typeof AdminDashboardOrganizationsIndexRoute
+  '/admin/dashboard/payments': typeof AdminDashboardPaymentsIndexRoute
   '/admin/dashboard/plans': typeof AdminDashboardPlansIndexRoute
   '/admin/dashboard/users': typeof AdminDashboardUsersIndexRoute
 }
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/dashboard/organizations': typeof AdminDashboardOrganizationsIndexRoute
+  '/admin/dashboard/payments': typeof AdminDashboardPaymentsIndexRoute
   '/admin/dashboard/plans': typeof AdminDashboardPlansIndexRoute
   '/admin/dashboard/users': typeof AdminDashboardUsersIndexRoute
 }
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/dashboard/organizations/': typeof AdminDashboardOrganizationsIndexRoute
+  '/admin/dashboard/payments/': typeof AdminDashboardPaymentsIndexRoute
   '/admin/dashboard/plans/': typeof AdminDashboardPlansIndexRoute
   '/admin/dashboard/users/': typeof AdminDashboardUsersIndexRoute
 }
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/admin/dashboard/'
     | '/admin/dashboard/organizations'
+    | '/admin/dashboard/payments'
     | '/admin/dashboard/plans'
     | '/admin/dashboard/users'
   fileRoutesByTo: FileRoutesByTo
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/admin/dashboard'
     | '/admin/dashboard/organizations'
+    | '/admin/dashboard/payments'
     | '/admin/dashboard/plans'
     | '/admin/dashboard/users'
   id:
@@ -202,6 +214,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/admin/dashboard/'
     | '/admin/dashboard/organizations/'
+    | '/admin/dashboard/payments/'
     | '/admin/dashboard/plans/'
     | '/admin/dashboard/users/'
   fileRoutesById: FileRoutesById
@@ -315,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardPlansIndexRouteImport
       parentRoute: typeof AdminDashboardRoute
     }
+    '/admin/dashboard/payments/': {
+      id: '/admin/dashboard/payments/'
+      path: '/payments'
+      fullPath: '/admin/dashboard/payments'
+      preLoaderRoute: typeof AdminDashboardPaymentsIndexRouteImport
+      parentRoute: typeof AdminDashboardRoute
+    }
     '/admin/dashboard/organizations/': {
       id: '/admin/dashboard/organizations/'
       path: '/organizations'
@@ -348,6 +368,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 interface AdminDashboardRouteChildren {
   AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
   AdminDashboardOrganizationsIndexRoute: typeof AdminDashboardOrganizationsIndexRoute
+  AdminDashboardPaymentsIndexRoute: typeof AdminDashboardPaymentsIndexRoute
   AdminDashboardPlansIndexRoute: typeof AdminDashboardPlansIndexRoute
   AdminDashboardUsersIndexRoute: typeof AdminDashboardUsersIndexRoute
 }
@@ -355,6 +376,7 @@ interface AdminDashboardRouteChildren {
 const AdminDashboardRouteChildren: AdminDashboardRouteChildren = {
   AdminDashboardIndexRoute: AdminDashboardIndexRoute,
   AdminDashboardOrganizationsIndexRoute: AdminDashboardOrganizationsIndexRoute,
+  AdminDashboardPaymentsIndexRoute: AdminDashboardPaymentsIndexRoute,
   AdminDashboardPlansIndexRoute: AdminDashboardPlansIndexRoute,
   AdminDashboardUsersIndexRoute: AdminDashboardUsersIndexRoute,
 }
