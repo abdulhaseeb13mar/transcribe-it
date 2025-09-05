@@ -44,6 +44,34 @@ router.post(
   })
 );
 
+// GET /api/payments/organization/:organizationId -> list payments for org
+router.get(
+  "/organization/:organizationId",
+  authenticateUser,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { organizationId } = req.params;
+    if (!organizationId)
+      throw new ValidationError("'organizationId' param is required");
+
+    // Ensure requesting user belongs to the organization
+    const email = req.user?.email;
+    if (!email) throw new ValidationError("Authenticated user email not found");
+    const user = await userService.findUserByEmail(email);
+    if (!user || !user.organizationId)
+      throw new ValidationError("User not in organization");
+    if (user.organizationId !== organizationId) {
+      throw new ValidationError(
+        "Not authorized to view payments for this organization"
+      );
+    }
+
+    const payments = await paymentService.getPaymentsByOrganization(
+      organizationId
+    );
+    sendResponse(res, 200, true, "Payments fetched", { payments });
+  })
+);
+
 // Stripe webhook (raw body required) -> configure in index before json parser if needed
 router.post("/webhook", async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"] as string | undefined;
