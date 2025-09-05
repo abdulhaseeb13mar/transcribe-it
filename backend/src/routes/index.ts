@@ -5,6 +5,7 @@ import adminRoutes from "./admin";
 import documentRoutes from "./documents";
 import creditsRoutes from "./credits";
 import { orgPlansRouter, adminPlansRouter } from "./plans";
+import paymentsRoutes from "./payments";
 
 const router: IRouter = Router();
 
@@ -16,6 +17,7 @@ router.use("/document", documentRoutes);
 router.use("/credits", creditsRoutes);
 router.use("/plans", orgPlansRouter);
 router.use("/admin/plans", adminPlansRouter);
+router.use("/payments", paymentsRoutes);
 
 // API Info endpoint
 router.get("/", (req, res) => {
@@ -30,6 +32,7 @@ router.get("/", (req, res) => {
       document: "/api/document",
       credits: "/api/credits",
       plans: "/api/plans",
+      payments: "/api/payments",
     },
   });
 });
