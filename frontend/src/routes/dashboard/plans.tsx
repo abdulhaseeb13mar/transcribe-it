@@ -82,24 +82,24 @@ function PlansPage() {
     }).format(n)
   }
 
-  const StatusBadge = ({ status }: { status?: string }) => {
-    if (!status) return null
-    const s = status.toUpperCase()
-    const map: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800 border-green-200',
-      PAST_DUE: 'bg-amber-100 text-amber-800 border-amber-200',
-      INACTIVE: 'bg-slate-100 text-slate-800 border-slate-200',
-      CANCELLED: 'bg-red-100 text-red-800 border-red-200',
-    }
-    const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-200'
-    return (
-      <span
-        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
-      >
-        {s.replace('_', ' ')}
-      </span>
-    )
-  }
+  // const StatusBadge = ({ status }: { status?: string }) => {
+  //   if (!status) return null
+  //   const s = status.toUpperCase()
+  //   const map: Record<string, string> = {
+  //     ACTIVE: 'bg-green-100 text-green-800 border-green-200',
+  //     PAST_DUE: 'bg-amber-100 text-amber-800 border-amber-200',
+  //     INACTIVE: 'bg-slate-100 text-slate-800 border-slate-200',
+  //     CANCELLED: 'bg-red-100 text-red-800 border-red-200',
+  //   }
+  //   const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-200'
+  //   return (
+  //     <span
+  //       className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
+  //     >
+  //       {s.replace('_', ' ')}
+  //     </span>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -187,7 +187,7 @@ function PlansPage() {
                           </Button>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               ) : (
@@ -198,5 +198,5 @@ function PlansPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
