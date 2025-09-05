@@ -65,10 +65,21 @@ router.get(
       );
     }
 
-    const payments = await paymentService.getPaymentsByOrganization(
-      organizationId
+    const page = Number((req.query.page as string) ?? 1) || 1;
+    const pageSize =
+      Number((req.query.limit as string) ?? req.query.pageSize ?? 20) || 20;
+    const result = await paymentService.getPaymentsByOrganization(
+      organizationId,
+      { page, pageSize }
     );
-    sendResponse(res, 200, true, "Payments fetched", { payments });
+    sendResponse(res, 200, true, "Payments fetched", {
+      payments: result.items,
+      count: result.items.length,
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      totalPages: result.totalPages,
+    });
   })
 );
 
