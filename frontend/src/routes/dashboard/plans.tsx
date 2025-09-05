@@ -116,9 +116,6 @@ function PlansPage() {
         )}
         <div className="grid gap-6 md:grid-cols-[320px,1fr]">
           <Card className="self-start">
-            <CardHeader>
-              <CardTitle>Current</CardTitle>
-            </CardHeader>
             <CardContent>
               <div className="text-gray-700 dark:text-gray-300">
                 <div className="text-sm">Remaining Credits</div>
