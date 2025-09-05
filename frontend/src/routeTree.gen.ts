@@ -17,6 +17,8 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DashboardTranslateRouteImport } from './routes/dashboard/translate'
 import { Route as DashboardPlansRouteImport } from './routes/dashboard/plans'
+import { Route as DashboardPaymentSuccessRouteImport } from './routes/dashboard/payment-success'
+import { Route as DashboardPaymentCancelRouteImport } from './routes/dashboard/payment-cancel'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
 import { Route as AdminDashboardUsersIndexRouteImport } from './routes/admin/dashboard/users/index'
@@ -63,6 +65,16 @@ const DashboardPlansRoute = DashboardPlansRouteImport.update({
   path: '/plans',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPaymentSuccessRoute = DashboardPaymentSuccessRouteImport.update({
+  id: '/payment-success',
+  path: '/payment-success',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPaymentCancelRoute = DashboardPaymentCancelRouteImport.update({
+  id: '/payment-cancel',
+  path: '/payment-cancel',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
@@ -98,6 +110,8 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/admin/dashboard': typeof AdminDashboardRouteWithChildren
+  '/dashboard/payment-cancel': typeof DashboardPaymentCancelRoute
+  '/dashboard/payment-success': typeof DashboardPaymentSuccessRoute
   '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin': typeof AdminIndexRoute
@@ -111,6 +125,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
+  '/dashboard/payment-cancel': typeof DashboardPaymentCancelRoute
+  '/dashboard/payment-success': typeof DashboardPaymentSuccessRoute
   '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin': typeof AdminIndexRoute
@@ -127,6 +143,8 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/admin/dashboard': typeof AdminDashboardRouteWithChildren
+  '/dashboard/payment-cancel': typeof DashboardPaymentCancelRoute
+  '/dashboard/payment-success': typeof DashboardPaymentSuccessRoute
   '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/translate': typeof DashboardTranslateRoute
   '/admin/': typeof AdminIndexRoute
@@ -144,6 +162,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/setup'
     | '/admin/dashboard'
+    | '/dashboard/payment-cancel'
+    | '/dashboard/payment-success'
     | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin'
@@ -157,6 +177,8 @@ export interface FileRouteTypes {
     | '/'
     | '/register'
     | '/setup'
+    | '/dashboard/payment-cancel'
+    | '/dashboard/payment-success'
     | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin'
@@ -172,6 +194,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/setup'
     | '/admin/dashboard'
+    | '/dashboard/payment-cancel'
+    | '/dashboard/payment-success'
     | '/dashboard/plans'
     | '/dashboard/translate'
     | '/admin/'
@@ -249,6 +273,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPlansRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/payment-success': {
+      id: '/dashboard/payment-success'
+      path: '/payment-success'
+      fullPath: '/dashboard/payment-success'
+      preLoaderRoute: typeof DashboardPaymentSuccessRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/payment-cancel': {
+      id: '/dashboard/payment-cancel'
+      path: '/payment-cancel'
+      fullPath: '/dashboard/payment-cancel'
+      preLoaderRoute: typeof DashboardPaymentCancelRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/admin/dashboard'
@@ -288,12 +326,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardPaymentCancelRoute: typeof DashboardPaymentCancelRoute
+  DashboardPaymentSuccessRoute: typeof DashboardPaymentSuccessRoute
   DashboardPlansRoute: typeof DashboardPlansRoute
   DashboardTranslateRoute: typeof DashboardTranslateRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardPaymentCancelRoute: DashboardPaymentCancelRoute,
+  DashboardPaymentSuccessRoute: DashboardPaymentSuccessRoute,
   DashboardPlansRoute: DashboardPlansRoute,
   DashboardTranslateRoute: DashboardTranslateRoute,
   DashboardIndexRoute: DashboardIndexRoute,
