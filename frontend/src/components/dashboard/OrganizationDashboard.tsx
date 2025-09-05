@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { logoutUser } from '../../store/authThunks'
 import { useRouter } from '@tanstack/react-router'
 import { UserRole } from '../../types/enums'
-import { creditService, type MyCreditsResponse } from '../../services/creditService'
+import {
+  creditService,
+  type MyCreditsResponse,
+} from '../../services/creditService'
 
 export function OrganizationDashboard() {
   const user = useSelector((state) => state.auth.user)
@@ -77,7 +80,8 @@ export function OrganizationDashboard() {
                 Role: Organization Admin
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                Credits: {credits !== null ? (
+                Credits:{' '}
+                {credits !== null ? (
                   <span className="font-semibold">{credits}</span>
                 ) : (
                   <span className="animate-pulse">Loading…</span>
@@ -88,12 +92,17 @@ export function OrganizationDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle>Translate</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Dashboard functionality coming soon...
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Convert files into English language.
               </p>
+              <Button
+                onClick={() => router.navigate({ to: '/dashboard/translate' })}
+              >
+                Go to Translate
+              </Button>
             </CardContent>
           </Card>
 
@@ -105,9 +114,16 @@ export function OrganizationDashboard() {
               {recent && recent.length > 0 ? (
                 <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
                   {recent.map((u) => (
-                    <li key={u.id} className="flex items-center justify-between">
-                      <span className="truncate mr-2">{formatOperation(u.operation)}</span>
-                      <span className="text-xs text-gray-500">-{u.creditsUsed}</span>
+                    <li
+                      key={u.id}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="truncate mr-2">
+                        {formatOperation(u.operation)}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        -{u.creditsUsed}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -128,7 +144,9 @@ export function OrganizationDashboard() {
                 Buy more credits to keep your team productive.
               </p>
               <div className="mt-3">
-                <Button onClick={() => router.navigate({ to: '/dashboard/plans' })}>
+                <Button
+                  onClick={() => router.navigate({ to: '/dashboard/plans' })}
+                >
                   Manage Credits
                 </Button>
               </div>
@@ -137,16 +155,16 @@ export function OrganizationDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Translate</CardTitle>
+              <CardTitle>Payments</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Convert text or files into different languages.
+                View payments history.
               </p>
               <Button
-                onClick={() => router.navigate({ to: '/dashboard/translate' })}
+                onClick={() => router.navigate({ to: '/dashboard/payments' })}
               >
-                Go to Translate
+                View Payments
               </Button>
             </CardContent>
           </Card>
