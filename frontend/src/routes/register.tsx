@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { OrgRegistrationForm } from '../components/auth/OrgRegistrationForm'
 
 export const Route = createFileRoute('/register')({
@@ -6,7 +6,7 @@ export const Route = createFileRoute('/register')({
 })
 
 function RegisterPage() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   const handleSuccess = () => {
     // Registration successful, could navigate to a success page or login
