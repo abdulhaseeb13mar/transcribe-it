@@ -19,6 +19,7 @@ router.post(
   authenticateUser,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { planId } = req.body || {};
+
     if (!planId) throw new ValidationError("'planId' is required");
     const email = req.user?.email;
     if (!email) throw new ValidationError("Authenticated user email not found");
@@ -34,6 +35,7 @@ router.post(
       await paymentService.createCheckoutSession({
         organizationId: user.organizationId,
         planId,
+        baseUrl: process.env.CORS_ORIGIN,
       });
     sendResponse(res, 200, true, "Checkout session created", {
       checkoutUrl,
