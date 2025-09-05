@@ -6,6 +6,7 @@ import {
   type PlansInfoResponse,
 } from '../../services/plansService'
 import { creditService } from '../../services/creditService'
+import { paymentService } from '../../services/paymentService'
 import { UserRole } from '../../types/enums'
 import {
   Card,
@@ -60,16 +61,11 @@ function PlansPage() {
   const handleSubscribe = async (planId: string) => {
     try {
       setSubscribing(planId)
-      const res = await plansService.subscribe(planId)
-      if (!res.success) throw new Error(res.message || 'Subscription failed')
-      // refresh state
-      const [plansRes, creditsRes] = await Promise.all([
-        plansService.getOrgPlans(),
-        creditService.getMyCredits(),
-      ])
-      if (plansRes.success && plansRes.data) setData(plansRes.data)
-      if (creditsRes.success && creditsRes.data)
-        setCredits(creditsRes.data.credits)
+      const res = await paymentService.createCheckout(planId)
+      if (!res.success || !res.data?.checkoutUrl)
+        throw new Error(res.message || 'Failed to start checkout')
+      // Redirect to Stripe Checkout
+      window.location.href = res.data.checkoutUrl
     } catch (e: any) {
       setError(e?.message || 'Subscription failed')
     } finally {
@@ -193,8 +189,8 @@ function PlansPage() {
                             {isCurrent
                               ? 'Current Plan'
                               : subscribing === p.id
-                                ? 'Subscribing…'
-                                : 'Subscribe'}
+                                ? 'Redirecting…'
+                                : 'Buy'}
                           </Button>
                         </div>
                       </div>
