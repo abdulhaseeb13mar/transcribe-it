@@ -43,7 +43,7 @@ export const authenticateUser = async (
     req.user = {
       id: user.id,
       email: user.email || "",
-      role: user.role,
+      role: user.user_metadata?.role,
     };
 
     next();
