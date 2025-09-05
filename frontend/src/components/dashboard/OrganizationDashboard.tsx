@@ -147,7 +147,7 @@ export function OrganizationDashboard() {
                 <Button
                   onClick={() => router.navigate({ to: '/dashboard/plans' })}
                 >
-                  Manage Credits
+                  Buy Credits
                 </Button>
               </div>
             </CardContent>
