@@ -1,26 +1,22 @@
-import path from "path";
+// Note: Avoid Node-only 'path' in Worker environments.
 
-// Lazy requires to keep compile-time light; runtime must have deps installed
+// Lazy references; resolve dynamically at runtime when available (Node env)
 let pdfParse: any;
 let mammoth: any;
 let Tesseract: any;
 let GoogleGenAI: any;
 let Type: any;
 
-try {
-  pdfParse = require("pdf-parse");
-} catch { }
-try {
-  mammoth = require("mammoth");
-} catch { }
-try {
-  Tesseract = require("tesseract.js");
-} catch { }
-try {
-  const mod = require("@google/genai");
-  GoogleGenAI = mod.GoogleGenAI;
-  Type = mod.Type;
-} catch { }
+const dynamicImport = async (name: string): Promise<any | null> => {
+  try {
+    // Avoid bundler resolution in Workers by using Function
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const importer: any = Function("n", "return import(n)");
+    return await importer(name);
+  } catch {
+    return null;
+  }
+};
 
 export type SupportedMime =
   | "application/pdf"
@@ -47,29 +43,34 @@ export interface TranslateResult {
 export class DocumentService {
   private static readonly MIN_TEXT_LENGTH_FOR_PDF = 50;
 
+  private getEnv(): any {
+    const g: any = globalThis as any;
+    return g.__APP_ENV || (typeof process !== "undefined" ? (process as any).env : {});
+  }
+
   private getGenAiApiKey(): string | undefined {
-    return (
-      process.env.GOOGLE_API_KEY ||
-      process.env.GENAI_API_KEY ||
-      process.env.API_KEY
-    );
+    const env: any = this.getEnv();
+    return env.GOOGLE_API_KEY || env.GENAI_API_KEY || env.API_KEY;
   }
 
   private hasGenAi(): boolean {
-    return Boolean(GoogleGenAI) && Boolean(this.getGenAiApiKey());
+    // Consider LLM OCR available if an API key exists; we'll use fetch.
+    return Boolean(this.getGenAiApiKey());
   }
 
   async extractText(
-    fileBuffer: Buffer,
+    fileBuffer: ArrayBuffer | Uint8Array,
     mimeType?: string,
     fileName?: string,
     opts?: { forceOcr?: boolean }
   ): Promise<ExtractResult> {
-    const ext = (fileName ? path.extname(fileName) : "").toLowerCase();
+    const { getExt, toUint8 } = await import("../utils/binary");
+    const ext = getExt(fileName);
     const normalizedMime = (mimeType || "").toLowerCase();
+    const u8 = toUint8(fileBuffer);
 
     if (normalizedMime === "application/pdf" || ext === ".pdf") {
-      return this.extractFromPdf(fileBuffer, opts);
+      return this.extractFromPdf(u8, opts);
     }
 
     if (
@@ -77,7 +78,7 @@ export class DocumentService {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       ext === ".docx"
     ) {
-      return this.extractFromDocx(fileBuffer);
+      return this.extractFromDocx(u8);
     }
 
     if (
@@ -98,38 +99,40 @@ export class DocumentService {
         ".tif",
       ].includes(ext)
     ) {
-      return this.extractFromImage(fileBuffer);
+      return this.extractFromImage(u8);
     }
 
     // Fallback try order
     try {
-      return await this.extractFromPdf(fileBuffer, opts);
+      return await this.extractFromPdf(u8, opts);
     } catch {
       try {
-        return await this.extractFromDocx(fileBuffer);
+        return await this.extractFromDocx(u8);
       } catch {
-        return await this.extractFromImage(fileBuffer);
+        return await this.extractFromImage(u8);
       }
     }
   }
 
   private async extractFromPdf(
-    buffer: Buffer,
+    buffer: Uint8Array,
     opts?: { forceOcr?: boolean }
   ): Promise<ExtractResult> {
-    if (!pdfParse) {
-      throw new Error(
-        "PDF parser not available. Please install 'pdf-parse'."
-      );
-    }
     const warnings: string[] = [];
     try {
-      const data = await pdfParse(buffer);
+      if (!pdfParse) {
+        const mod = await dynamicImport("pdf-parse");
+        pdfParse = mod?.default || mod;
+      }
+      const { maybeToNodeBuffer } = await import("../utils/binary");
+      const nodeBuf = maybeToNodeBuffer(buffer);
+      const data = await pdfParse(nodeBuf ?? buffer);
       let text = (data.text || "").trim();
 
       if (opts?.forceOcr || text.length < DocumentService.MIN_TEXT_LENGTH_FOR_PDF) {
         if (this.hasGenAi()) {
-          const base64 = buffer.toString("base64");
+          const { uint8ToBase64 } = await import("../utils/binary");
+          const base64 = uint8ToBase64(buffer);
           const llmText = await this.extractWithLlmOcr(base64, "application/pdf");
           if (llmText && llmText.trim().length > 0) {
             text = llmText.trim();
@@ -154,7 +157,8 @@ export class DocumentService {
       };
     } catch (e) {
       if (this.hasGenAi()) {
-        const base64 = buffer.toString("base64");
+        const { uint8ToBase64 } = await import("../utils/binary");
+        const base64 = uint8ToBase64(buffer);
         const text = await this.extractWithLlmOcr(base64, "application/pdf");
         return {
           type: "pdf",
@@ -168,32 +172,40 @@ export class DocumentService {
     }
   }
 
-  private async extractFromDocx(buffer: Buffer): Promise<ExtractResult> {
+  private async extractFromDocx(buffer: Uint8Array): Promise<ExtractResult> {
     if (!mammoth) {
-      throw new Error(
-        "DOCX parser not available. Please install 'mammoth'."
-      );
+      const mod = await dynamicImport("mammoth");
+      mammoth = mod?.default || mod;
     }
-    const result = await mammoth.extractRawText({ buffer });
+    const { maybeToNodeBuffer } = await import("../utils/binary");
+    const nodeBuf = maybeToNodeBuffer(buffer);
+    const result = await mammoth.extractRawText({ buffer: nodeBuf ?? buffer });
     const text: string = (result.value || "").trim();
     return { type: "docx", text };
   }
 
-  private async extractFromImage(buffer: Buffer): Promise<ExtractResult> {
+  private async extractFromImage(buffer: Uint8Array): Promise<ExtractResult> {
     // Prefer LLM OCR for images when available
     if (this.hasGenAi()) {
-      const base64 = buffer.toString("base64");
+      const { uint8ToBase64 } = await import("../utils/binary");
+      const base64 = uint8ToBase64(buffer);
       const text = await this.extractWithLlmOcr(base64, "image/jpeg");
       return { type: "image", text: (text || "").trim() };
     }
     if (!Tesseract) {
-      throw new Error(
-        "OCR engine not available. Install 'tesseract.js' or configure GOOGLE_API_KEY for LLM OCR."
-      );
+      const mod = await dynamicImport("tesseract.js");
+      Tesseract = mod?.default || mod;
     }
-    const { data } = await Tesseract.recognize(buffer, "eng");
-    const text: string = (data?.text || "").trim();
-    return { type: "image", text };
+    if (Tesseract) {
+      const { maybeToNodeBuffer } = await import("../utils/binary");
+      const nodeBuf = maybeToNodeBuffer(buffer);
+      const { data } = await Tesseract.recognize(nodeBuf ?? buffer, "eng");
+      const text: string = (data?.text || "").trim();
+      return { type: "image", text };
+    }
+    throw new Error(
+      "OCR engine not available. Install 'tesseract.js' or configure GOOGLE_API_KEY to enable LLM OCR."
+    );
   }
 
   private async extractWithLlmOcr(
@@ -201,44 +213,56 @@ export class DocumentService {
     mimeType: string
   ): Promise<string> {
     const apiKey = this.getGenAiApiKey();
-    if (!GoogleGenAI || !apiKey) {
-      throw new Error(
-        "LLM OCR not available. Install '@google/genai' and set GOOGLE_API_KEY/GENAI_API_KEY."
-      );
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
-    try {
-      const filePart = { inlineData: { mimeType, data: base64Content } };
-      const textPart = {
-        text: "Extract all text from this document. If no text is present, return an empty response.",
-      };
-      const response = await ai.models.generateContent({
-        model: process.env.GENAI_MODEL || "gemini-2.5-flash",
-        contents: { parts: [filePart, textPart] },
-      });
-      const r: any = response as any;
-      const text = typeof r.text === "function" ? await r.text() : r.text;
-      return (text || "").toString();
-    } catch (error: any) {
-      const message = (error?.message || "").toString();
-      if (mimeType === "application/pdf" && message.includes("INVALID_ARGUMENT")) {
-        const response = await new GoogleGenAI({ apiKey }).models.generateContent({
-          model: process.env.GENAI_MODEL || "gemini-2.5-flash",
-          contents: {
-            parts: [
-              { inlineData: { mimeType: "image/jpeg", data: base64Content } },
-              {
-                text: "This file was sent as a PDF but failed to process. It might be an image-wrapped PDF. Perform OCR and extract any text.",
-              },
-            ],
-          },
-        });
-        const r: any = response as any;
-        const text = typeof r.text === "function" ? await r.text() : r.text;
-        return (text || "").toString();
+    if (!apiKey) throw new Error("LLM OCR not available. Set GOOGLE_API_KEY/GENAI_API_KEY.");
+    const env: any = this.getEnv();
+    const model = (env.GENAI_MODEL as string) || "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { inlineData: { mimeType, data: base64Content } },
+            { text: "Extract all text from this document. If no text is present, return an empty response." },
+          ],
+        },
+      ],
+    };
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      if (mimeType === "application/pdf") {
+        const retry = {
+          contents: [
+            {
+              parts: [
+                { inlineData: { mimeType: "image/jpeg", data: base64Content } },
+                { text: "This file may be an image-wrapped PDF. Perform OCR and extract any text." },
+              ],
+            },
+          ],
+        };
+        const r2 = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(retry) });
+        const j2: any = await r2.json().catch(() => ({}));
+        if (r2.ok) return this.parseGeminiText(j2);
       }
-      throw error;
+      const msg = json?.error?.message || resp.statusText || "LLM OCR request failed";
+      throw new Error(msg);
+    }
+    return this.parseGeminiText(json);
+  }
+
+  private parseGeminiText(resp: any): string {
+    try {
+      const c = resp?.candidates?.[0];
+      const parts = c?.content?.parts || [];
+      const texts = parts.map((p: any) => (typeof p.text === "string" ? p.text : "")).filter(Boolean);
+      return (texts.join("\n") || "").toString();
+    } catch {
+      return "";
     }
   }
 
@@ -247,80 +271,26 @@ export class DocumentService {
     sourceLang: string;
     targetLang?: string; // defaults to 'en'
   }): Promise<TranslateResult> {
-    if (!GoogleGenAI || !Type) {
-      throw new Error(
-        "@google/genai not available. Install dependency and set GOOGLE_API_KEY/GENAI_API_KEY."
-      );
-    }
     const apiKey = this.getGenAiApiKey();
-    if (!apiKey) {
-      throw new Error(
-        "Google GenAI API key not configured. Set GOOGLE_API_KEY or GENAI_API_KEY or API_KEY."
-      );
-    }
-    const ai = new GoogleGenAI({ apiKey });
+    if (!apiKey) throw new Error("Google GenAI API key not configured. Set GOOGLE_API_KEY or GENAI_API_KEY or API_KEY.");
     const { text, sourceLang, targetLang = "en" } = params;
-
-    const translationSchema = {
-      type: Type.OBJECT,
-      properties: {
-        translation: {
-          type: Type.STRING,
-          description:
-            "The translated content as Markdown that preserves the document's layout and structure (headings, lists, tables, emphasis).",
-        },
-      },
-      required: ["translation"],
-    };
-
-    const jsonConfig = {
-      responseMimeType: "application/json",
-      responseSchema: translationSchema,
-    };
-
-    const prompt = `Task: Translate the following document from ${sourceLang} to ${targetLang} and output ONLY Markdown that preserves the original layout and structure.
-
-      Requirements:
-      - Maintain document hierarchy and structure: headings, subheadings, paragraphs.
-      - Preserve lists (ordered/unordered), blockquotes, and code blocks.
-      - Represent tables using GitHub-flavored Markdown tables when applicable.
-      - Preserve emphasis (bold/italic), inline code, and line breaks.
-      - Do not add commentary. Do not include prefaces or explanations.
-      - Return the result strictly in the JSON schema with the Markdown in the 'translation' field.
-
-      Content to translate:
----
-${text}`;
-
-    const response = await ai.models.generateContent({
-      model: process.env.GENAI_MODEL || "gemini-2.5-flash",
-      contents: prompt,
-      config: jsonConfig,
-    });
-
-    const r: any = response as any;
-    const raw = typeof r.text === "function" ? await r.text() : r.text;
-    let translation = "";
-    try {
-      const parsed = JSON.parse(String(raw || "{}"));
-      if (typeof parsed.translation === "string") {
-        translation = parsed.translation;
-      } else {
-        throw new Error(
-          "'translation' field missing or not a string in AI response"
-        );
-      }
-    } catch (e) {
-      throw new Error(
-        `Invalid JSON response from translation model: ${String(raw)}`
-      );
+    const env: any = this.getEnv();
+    const model = (env.GENAI_MODEL as string) || "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const prompt = `Translate the following document from ${sourceLang} to ${targetLang}. Output ONLY Markdown preserving structure (headings, lists, tables, emphasis). No commentary.\n\n---\n${text}`;
+    const body = { contents: [{ parts: [{ text: prompt }] }] };
+    const resp = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const json: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const msg = json?.error?.message || resp.statusText || "Translation request failed";
+      throw new Error(msg);
     }
-
+    const translation = this.parseGeminiText(json);
     return { translation };
   }
 
   async extractAndTranslate(params: {
-    buffer: Buffer;
+    buffer: ArrayBuffer | Uint8Array;
     mimeType?: string;
     fileName?: string;
     sourceLang: string;
